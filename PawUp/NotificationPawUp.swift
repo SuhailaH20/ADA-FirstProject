@@ -40,21 +40,17 @@ struct NotificationPawUp: View {
                     // Buttons
                     VStack {
                         Button(action: {                        requestNotificationPermission()}) {
-                            ZStack {
-                                Image("Rectangle")
-                                    .resizable()
-                                    .scaledToFit()
-                                Text("Allow Notification").font(.custom("GNF", size: 21)).foregroundStyle(Color.white)
-                            }
+                            
+                                
+                            Text("Allow Notification").font(.custom("GNF", size: 21)).foregroundStyle(Color.white).frame(width: 350, height: 49).background(Color.brandNavy).cornerRadius(5).padding(.bottom, 5)
+                            
                         }
+                        
                         Button(action: {}) {
-                            ZStack {
-                                Image("Rectangle2")
-                                    .resizable()
-                                    .scaledToFit()
-                                Text("Maybe Later").font(.custom("GNF", size: 21)).foregroundStyle(Color.black)
+                            
+                                                                Text("Maybe Later").font(.custom("GNF", size: 21)).foregroundStyle(Color.black).frame(width: 350, height: 49).background(Color.white).cornerRadius(5)
 
-                            }
+                            
                             
                         }
                         
