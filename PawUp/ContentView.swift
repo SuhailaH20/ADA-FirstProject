@@ -28,6 +28,9 @@ struct ContentView: View {
                     ActionButtonView()
                         .offset(y: 40)
                 }
+                
+                ExerciseView()
+                        .padding(.top, 60)
                
 
 
@@ -113,6 +116,52 @@ struct ActionButtonView:View {
         }
 
     }
+}
+
+struct ExerciseView: View {
+    @State private var isChecked: Bool = false
+       
+       var body: some View {
+           HStack {
+               VStack() {
+                   Image("clock")
+                       .resizable()
+                       .frame(width: 50, height: 50)
+                   
+                   Text("1:30")
+                       .font(.custom("GNF", size: 14))
+               }
+               .padding(.top, 20)
+               .frame(width: 50, height: 50)
+               .cornerRadius(3)
+               
+               VStack(alignment: .leading, spacing: 4) {
+                   Text("did you Workout today?")
+                       .font(.custom("GNF", size: 18))
+                       .foregroundColor(Color(red: 0xC7/255, green: 0xAA/255, blue: 0x82/255)) // similar color from screenshot
+                   
+                   Text("just a quick checkup...") // placeholder description
+                       .font(.custom("GNF", size: 14))
+                       .foregroundColor(Color(red: 0xC7/255, green: 0xAA/255, blue: 0x82/255))
+                       .lineLimit(2)
+               }
+               
+               Spacer()
+               
+               Button(action: {
+                   isChecked.toggle()
+               }) {
+                   Image(systemName: isChecked ? "checkmark.square.fill" : "square")
+                       .resizable()
+                       .frame(width: 26, height: 26)
+                       .foregroundColor(isChecked ? Color(red: 0xC7/255, green: 0xAA/255, blue: 0x82/255) : .white)
+               }
+           }
+           .padding()
+           .background(Color.brandNavy)
+           .cornerRadius(5)
+           .padding(.horizontal, 20)
+       }
 }
 
 #Preview {
