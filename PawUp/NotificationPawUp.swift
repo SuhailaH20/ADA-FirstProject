@@ -4,11 +4,13 @@
 //
 //  Created by Areeg Altaiyah on 06/04/1447 AH.
 //
-
 import SwiftUI
 import UserNotifications
 
 struct NotificationPawUp: View {
+    // Instantiate your NotificationManager here
+    let notificationManager = NotificationManager()
+    
     var body: some View {
         NavigationStack {
             ZStack {
@@ -16,13 +18,13 @@ struct NotificationPawUp: View {
                 Color(red: 0xFD/255, green: 0xF8/255, blue: 0xEF/255)
                     .ignoresSafeArea()
                 VStack {
-    Spacer()
-                    Text("Turn on notifications")
+                    Spacer()
+                    Text("Turn on Notifications")
                         .font(.custom("GNF", size: 28))
                         .multilineTextAlignment(.center)
                         .foregroundStyle(Color.black).padding(.bottom, 100)
                     
-
+                    
                     // Image + Pink Text
                     VStack {
                         Image("GroupNotification")
@@ -39,55 +41,50 @@ struct NotificationPawUp: View {
                     
                     // Buttons
                     VStack {
-                        Button(action: {                        requestNotificationPermission()}) {
-                            
-                                
-                            Text("Allow Notification").font(.custom("GNF", size: 21)).foregroundStyle(Color.white).frame(width: 350, height: 49).background(Color.brandNavy).cornerRadius(5).padding(.bottom, 5)
-                            
+                        Button(action: {
+                            // Call the manager's function to request permission
+                            notificationManager.requestNotificationPermission { granted in
+                                if granted {
+                                    // If permission is granted, immediately schedule the daily notifications
+                                    notificationManager.scheduleDailyNotificationsWithDifferentContent()
+                                    
+                                    // TODO: Add navigation logic here to move the user to the next screen
+                                    print("Ready to navigate to the next screen!")
+                                } else {
+                                    // User denied permission
+                                    print("Notification permission was denied.")
+                                }
+                            }
+                        }) {
+                            Text("Allow Notification")
+                                .font(.custom("GNF", size: 21))
+                                .foregroundStyle(Color.white)
+                                .frame(width: 350, height: 49)
+                                .background(Color.brandNavy)
+                                .cornerRadius(5)
+                                .padding(.bottom, 5)
                         }
                         
-                        Button(action: {}) {
-                            
-                                                                Text("Maybe Later").font(.custom("GNF", size: 21)).foregroundStyle(Color.black).frame(width: 350, height: 49).background(Color.white).cornerRadius(5)
-
-                            
-                            
+                        Button(action: {
+                            // TODO: Add navigation logic here to move the user to the next screen (without notifications)
+                            print("User chose 'Maybe Later'.")
+                        }) {
+                            Text("Maybe Later")
+                                .font(.custom("GNF", size: 21))
+                                .foregroundStyle(Color.black)
+                                .frame(width: 350, height: 49)
+                                .background(Color.white)
+                                .cornerRadius(5)
                         }
-                        
-
                     }.padding()
-                                    }
+                }
             }
-        } // closes ZStack
+        } // closes NavigationStack
     }
-    
-    //Notification Function
-    private func requestNotificationPermission() {
-           UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
-               if let error = error {
-                   print("Error requesting notifications: \(error)")
-                   return
-               }
-
-               if granted {
-                   print("Notifications Allowed")
-                   DispatchQueue.main.async {
-                       UIApplication.shared.registerForRemoteNotifications()
-                   }
-               } else {
-                   print("Notifications Denied")
-               }
-           }
-       }
-    
- 
-
-   }
-
-
-
+}
 
 
 #Preview {
     NotificationPawUp()
 }
+
