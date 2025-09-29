@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct ContentView: View {
+struct SetUp: View {
     
     @State private var name: String = ""
     @State private var selectedGoals: Set<String> = []
@@ -181,5 +181,5 @@ struct ContentView: View {
 }
 
 #Preview {
-    ContentView()
+    SetUp()
 }
