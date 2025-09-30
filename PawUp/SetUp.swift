@@ -8,8 +8,8 @@ struct SetUp: View {
     @State private var breakDayCount = 0
 
     let goals: [String] = [
-        "Build muscle and improve physical fitness" ,"Practice regularly without missing planned sessions","Do sport multiple times a week","Stay hydrated on training days","","Run a 10K", "Lose 10 kg through regular sports", "Play basketball consistently",
-        "Eating healthy foods", "Reduce stress and improve mental wellbeing"
+        "Build muscle","Improve physical fitness" ,"Practice regularly","Do sport multiple times a week","Stay hydrated on training days","Run a 10K", "Lose 10 kg through regular sports", "Play basketball consistently",
+        "Eating healthy foods", "Improve mental wellbeing"
     ]
         
     var body: some View {
@@ -20,15 +20,15 @@ struct SetUp: View {
             VStack(spacing: 20) {
                 Spacer()
                 Text("Let's Set You Up!")
-                    .font(.custom("GNF", size: 40))
+                    .font(.custom("GNF", size: 30))
                     .fontWeight(.bold)
-                    .foregroundColor(Color(red: 47/255, green: 47/255, blue: 75/255))
+                    .foregroundColor(Color(red: 47/255, green: 47/255, blue: 75/255)).padding(.horizontal, 20)
                 
-                Text("Your buddy’s excited to cheer you on let’s tell them a bit about you!")
-                    .font(.custom("GNF", size: 20))
+                Text("Your buddy’s excited to cheer you on\n let’s tell them a bit about you!")
+                    .font(.custom("GNF", size: 19))
                     .foregroundColor(Color(red: 208/255, green: 127/255, blue: 116/255))
                     .multilineTextAlignment(.center)
-                    .padding(.horizontal)
+                    .padding(.horizontal).padding(.vertical)
                 
                 VStack(alignment: .leading, spacing: 16) {
                     
@@ -60,7 +60,7 @@ struct SetUp: View {
                             .foregroundColor(Color(red: 47/255, green: 47/255, blue: 75/255))
 
                         Stepper(value: $breakDayCount, in: 0...5) {
-                            Text("\(breakDayCount) day\(breakDayCount == 1 ? "" : "s")")
+                            Text("\(breakDayCount) Day\(breakDayCount == 1 ? "" : "s")")
                                 .font(.custom("GNF", size: 18))
                                 .foregroundColor(Color(red: 47/255, green: 47/255, blue: 75/255))
                         }
@@ -80,13 +80,14 @@ struct SetUp: View {
                     print("Goals: \(selectedGoals)")
                     print("Breakdays: \(breakDayCount)")
                 }) {
-                    ZStack {
-                        Image("Rectangle")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
+                    Button(action: {
+                    }) {
                         Text("Continue")
-                            .font(.custom("GNF", size: 22))
-                            .foregroundColor(.white)
+                            .font(.custom("GNF", size: 21))
+                            .foregroundStyle(Color.white)
+                            .frame(width: 350, height: 49)
+                            .background(Color.brandNavy)
+                            .cornerRadius(5)
                     }
                     
                 }
@@ -111,7 +112,8 @@ struct SetUp: View {
                     Text(label)
                         .font(.custom("GNF", size: 18))
                         .foregroundColor(selectedOptions.wrappedValue.isEmpty
-                            ? .gray : Color(red: 47 / 255, green: 47 / 255, blue: 75 / 255))
+                            ? Color(red: 0xC9/255, green: 0xC9/255, blue: 0xC9/255)
+                            : Color(red: 47 / 255, green: 47 / 255, blue: 75 / 255))
                         .lineLimit(1)
                         .truncationMode(.tail)
                     

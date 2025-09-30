@@ -154,11 +154,14 @@ struct ActionButton: View {
 
                             Text("\(Int(progress))/5")
                                                             .font(.custom("GNF", size: 14).weight(.bold))
-                                                            .foregroundColor(Color(red: 0x2F/255, green: 0x2F/255, blue: 0x4B/255)) // Changed to #2F2F4B
+                                                            .foregroundColor(Color(red: 0x2F/255, green: 0x2F/255, blue: 0x4B/255))
 
 
                         }
-                        .transition(.move(edge: .trailing).combined(with: .opacity))
+                        .transition(.move(edge: .leading).combined(with: .opacity))
+                        
+                        
+
                     }
                 }
             }

@@ -83,21 +83,22 @@ struct CalendarPawup: View {
             pageBG.ignoresSafeArea()
 
             VStack(spacing: 30) {
-                HStack(spacing: 16) {
+                HStack(spacing: 10) {
+                    Spacer()
                     Image(systemName: "chevron.left")
-                        .font(.system(size: 20, weight: .bold))
+                        .font(.system(size: 23, weight: .bold))
                     Text("September")
                         .font(.gnf(36))
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 20, weight: .bold))
+                        .font(.system(size: 23, weight: .bold))
                     Spacer()
                 }
                 .padding(.horizontal, 63)
 
             
                 HStack(spacing: 12) {
-                    Button("did Workout Today") { didWorkoutToday = true }
-                    Button("didn't Workout Today") { didWorkoutToday = false }
+                    Button("Workout completed today") { didWorkoutToday = true }
+                    Button("Skip workout today") { didWorkoutToday = false }
                 }
                 .font(.gnf(12))
                 .padding(.horizontal, 63)

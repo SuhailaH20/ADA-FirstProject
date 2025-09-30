@@ -32,14 +32,13 @@ struct pickyourbuddy: View {
             Color(red: 0xFD/255, green: 0xF8/255, blue: 0xEF/255)
                 .ignoresSafeArea()
                 
-            VStack(spacing: 24) {
-                    Spacer()
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding([.top, .leading, .trailing], 30.0)
+            VStack(spacing: 2) {
+                    
                     Text("Choose your Buddy!")
-                        .font(.custom("GNF", size: 39))
+                        .font(.custom("GNF", size: 35))
                         .padding(.vertical, 20.0)
                         .foregroundStyle(Color("brandNavy"))
+                        .padding(.top,70)
                     
                     Text("Ready to meet your new fitness sidekick?")
                         .font(.custom("GNF", size: 20))
@@ -86,17 +85,15 @@ struct pickyourbuddy: View {
                     
                     Spacer()
                     
-                    Button("Continue") { }
-                        .font(.custom("GNF", size: 20))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(Color("brandNavy"))
-                        .foregroundStyle(.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
-                        .disabled(true)
-                        .padding(.horizontal)
-                        .padding(.bottom, 30)
-                    Spacer()
+                Button(action: {
+                }) {
+                    Text("Continue")
+                        .font(.custom("GNF", size: 21))
+                        .foregroundStyle(Color.white)
+                        .frame(width: 350, height: 49)
+                        .background(Color.brandNavy)
+                        .cornerRadius(5)
+                }
                 }
                 .padding()
         
