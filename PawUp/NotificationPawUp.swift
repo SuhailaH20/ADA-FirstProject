@@ -1,22 +1,28 @@
 //
-//  ContentView.swift
-//  PawUp
+//  ContentView.swift
+//  PawUp
 //
-//  Created by Areeg Altaiyah on 06/04/1447 AH.
+//  Created by Areeg Altaiyah on 06/04/1447 AH.
 //
 import SwiftUI
 import UserNotifications
 
+
 struct NotificationPawUp: View {
-    // Instantiate your NotificationManager here
+    // 1. STATE VARIABLE to control navigation
+    @State private var shouldNavigateToPetPage: Bool = false
+    
+    // Instantiating NotificationManager
     let notificationManager = NotificationManager()
     
     var body: some View {
+        // Use a NavigationStack for general structure,
         NavigationStack {
             ZStack {
                 // Background
                 Color(red: 0xFD/255, green: 0xF8/255, blue: 0xEF/255)
                     .ignoresSafeArea()
+                
                 VStack {
                     Spacer()
                     Text("Turn on Notifications")
@@ -44,15 +50,18 @@ struct NotificationPawUp: View {
                         Button(action: {
                             // Call the manager's function to request permission
                             notificationManager.requestNotificationPermission { granted in
-                                if granted {
-                                    // If permission is granted, immediately schedule the daily notifications
-                                    notificationManager.scheduleDailyNotificationsWithDifferentContent()
-                                    
-                                    // TODO: Add navigation logic here to move the user to the next screen
-                                    print("Ready to navigate to the next screen!")
-                                } else {
-                                    // User denied permission
-                                    print("Notification permission was denied.")
+                                DispatchQueue.main.async {
+                                    if granted {
+                                        // If permission is granted
+                                        notificationManager.scheduleDailyNotificationsWithDifferentContent()
+                                        
+                                        // 3. Set state to trigger navigation
+                                        self.shouldNavigateToPetPage = true
+                                    } else {
+                                        // User denied permission
+                                        self.shouldNavigateToPetPage = true
+                                        print("Notification permission was denied.")
+                                    }
                                 }
                             }
                         }) {
@@ -66,7 +75,7 @@ struct NotificationPawUp: View {
                         }
                         
                         Button(action: {
-                            // TODO: Add navigation logic here to move the user to the next screen (without notifications)
+                            self.shouldNavigateToPetPage = true
                             print("User chose 'Maybe Later'.")
                         }) {
                             Text("Maybe Later")
@@ -79,12 +88,11 @@ struct NotificationPawUp: View {
                     }.padding()
                 }
             }
-        } // closes NavigationStack
+        }
+        // 4. Use a fullScreenCover to cleanly transition to the PetPage,
+        //    making it look like the onboarding view is replaced.
+        .fullScreenCover(isPresented: $shouldNavigateToPetPage) {
+            PetPage()
+        }
     }
 }
-
-
-#Preview {
-    NotificationPawUp()
-}
-

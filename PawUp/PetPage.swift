@@ -70,7 +70,7 @@ struct BuddyCardView: View {
                 Text("Your buddy’s tail is wagging—ready to move?")
                     .font(.custom("GNF", size: 24))
                     .foregroundColor(.white)
-                    .fixedSize(horizontal: false, vertical: true)
+                    .fixedSize(horizontal: false, vertical: true).padding(.bottom)
                     .layoutPriority(1)
 
                 Spacer(minLength: 20)
@@ -268,7 +268,7 @@ struct InsightsSection: View {
 
                 InsightCard(title: "Streak") {
                     Text("\(streakDays) days")
-                        .font(.custom("GNF", size: 30))
+                        .font(.custom("GNF", size: 20))
                         .foregroundColor(Color(red: 0.9, green: 0.4, blue: 0.4))
                         .fontWeight(.bold)
 
@@ -292,7 +292,7 @@ struct InsightCard<Content: View>: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 5) {
             Text(title)
                 .font(.custom("GNF", size: 18))
                 .fontWeight(.semibold)
