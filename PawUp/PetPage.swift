@@ -94,7 +94,7 @@ struct ActionButtonView: View {
     @State private var breakDayProgress: CGFloat = 0.0
 
     var body: some View {
-        HStack(spacing: 50) {
+        HStack(spacing: 40) {
             ActionButton(
                 isSelected: .constant(false),
                 imageName: "trophy",
@@ -137,12 +137,14 @@ struct ActionButton: View {
                 Rectangle()
                     .fill(Color(red: 0.9, green: 0.8, blue: 0.6))
                     .frame(width: isSelected ? 140 : 80, height: 80)
+                    .aspectRatio(contentMode: .fit)
                     .cornerRadius(10)
                     .shadow(radius: 2)
 
                 HStack(spacing: 10) {
                     Image(imageName)
                         .resizable()
+                        .scaledToFit()
                         .frame(width: 60, height: 60)
 
                     if isSelected {
@@ -151,8 +153,9 @@ struct ActionButton: View {
                                 .frame(width: 50, height: 20)
 
                             Text("\(Int(progress))/5")
-                                .font(.caption.weight(.bold)) // Bolder text
-                                .foregroundColor(.black)
+                                                            .font(.custom("GNF", size: 14).weight(.bold))
+                                                            .foregroundColor(Color(red: 0x2F/255, green: 0x2F/255, blue: 0x4B/255)) // Changed to #2F2F4B
+
 
                         }
                         .transition(.move(edge: .trailing).combined(with: .opacity))
@@ -171,18 +174,18 @@ struct CustomProgressBar: View {
         GeometryReader { geometry in
             ZStack(alignment: .leading) {
                 Rectangle()
-                    .fill(Color.white)
+                    .fill(Color(red: 0xD1/255, green: 0x7F/255, blue: 0x74/255)) // Changed to #D17F74
                     .frame(width: geometry.size.width, height: geometry.size.height)
 
                 Rectangle()
-                    .fill(Color(red: 0.9, green: 0.4, blue: 0.4)) // pinkish fill
+                    .fill(Color(red: 0.9, green: 0.4, blue: 0.4))
                     .frame(width: geometry.size.width * progress, height: geometry.size.height)
             }
             .cornerRadius(2)
             .overlay(
-                RoundedRectangle(cornerRadius: 2)
-                    .stroke(Color.black.opacity(0.2), lineWidth: 1)
-            )
+                           RoundedRectangle(cornerRadius: 2)
+                               .stroke(Color(red: 0x2F/255, green: 0x2F/255, blue: 0x4B/255), lineWidth: 3) // Updated stroke color to #2F2F4B
+                       )
         }
     }
 }
@@ -208,11 +211,11 @@ struct ExerciseView: View {
                .cornerRadius(3)
                
                VStack(alignment: .leading, spacing: 4) {
-                   Text("did you Workout today?")
+                   Text("Did you Workout today?")
                        .font(.custom("GNF", size: 18))
                        .foregroundColor(Color(red: 0xC7/255, green: 0xAA/255, blue: 0x82/255)) // similar color from screenshot
                    
-                   Text("just a quick checkup...") // placeholder description
+                   Text("Just a quick checkup...") // placeholder description
                        .font(.custom("GNF", size: 14))
                        .foregroundColor(Color(red: 0xC7/255, green: 0xAA/255, blue: 0x82/255))
                        .lineLimit(2)
