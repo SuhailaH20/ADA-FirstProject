@@ -31,6 +31,8 @@ struct PetPage: View {
                 
                 ExerciseView()
                         .padding(.top, 60)
+                
+                InsightsSection()
                
 
 
@@ -233,6 +235,74 @@ struct ExerciseView: View {
            .padding(.horizontal, 20)
        }
 }
+
+struct InsightsSection: View {
+    var dailyGoal: CGFloat = 3.5
+    var dailyGoalMax: CGFloat = 5
+    var petLevel: Int = 4
+    var maxPetLevel: Int = 10
+    var streakDays: Int = 12
+
+    let columns = [
+        GridItem(.flexible()),
+        GridItem(.flexible())
+    ]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Your Insights")
+                .font(.custom("GNF", size: 24))
+                .fontWeight(.bold)
+                .padding(.horizontal, 20)
+
+            LazyVGrid(columns: columns, spacing: 20) {
+                InsightCard(title: "Daily Goal") {
+
+                    Text("Run 10k miles")
+                        .font(.custom("GNF", size: 20))
+                        .foregroundColor(.gray)
+                }
+
+                InsightCard(title: "Streak") {
+                    Text("\(streakDays) days")
+                        .font(.custom("GNF", size: 30))
+                        .foregroundColor(Color(red: 0.9, green: 0.4, blue: 0.4))
+                        .fontWeight(.bold)
+
+                    Text("Keep going!")
+                        .font(.custom("GNF", size: 14))
+                        .foregroundColor(.gray)
+                }
+            }
+            .padding(.horizontal, 20)
+        }
+        .padding(.top, 40)
+    }
+}
+struct InsightCard<Content: View>: View {
+    let title: String
+    let content: Content
+
+    init(title: String, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.content = content()
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.custom("GNF", size: 18))
+                .fontWeight(.semibold)
+
+            content
+        }
+        .padding()
+        .background(Color.white)
+        .cornerRadius(12)
+        .shadow(color: .gray.opacity(0.2), radius: 4, x: 0, y: 2)
+    }
+}
+
 
 #Preview {
     PetPage()
