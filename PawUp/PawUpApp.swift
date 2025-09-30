@@ -11,7 +11,7 @@ import SwiftUI
 struct PawUpApp: App {
     var body: some Scene {
         WindowGroup {
-           ContentView()
+           Splash()
         }
     }
 }
