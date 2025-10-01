@@ -8,6 +8,10 @@
 import SwiftUI
 
 struct PetPage: View {
+    // To display the goal taken
+    @AppStorage("selectedGoal") var storedGoal: String = "" 
+
+
     var body: some View {
         ZStack(alignment: .topLeading) {
             
@@ -325,6 +329,7 @@ struct ExerciseView: View {
 }
 
 struct InsightsSection: View {
+    @AppStorage("selectedGoal")  var storedGoal: String = ""
     var dailyGoal: CGFloat = 3.5
     var dailyGoalMax: CGFloat = 5
     var petLevel: Int = 4
@@ -346,7 +351,7 @@ struct InsightsSection: View {
             LazyVGrid(columns: columns, spacing: 20) {
                 InsightCard(title: "Daily Goal") {
 
-                    Text("Run 10k miles")
+                    Text(storedGoal.isEmpty ? "" : storedGoal)
                         .font(.custom("GNF", size: 20))
                         .foregroundColor(.gray)
                 }
