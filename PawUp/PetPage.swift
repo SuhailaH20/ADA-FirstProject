@@ -102,17 +102,33 @@ struct ActionButtonView: View {
     
     // Controls whether the break day confirmation alert is shown
     @State private var showBreakdayConfirmation: Bool = false
+    //
+    @State private var showSheet = false
+
 
     var body: some View {
         HStack(spacing: 40) {
             
             // Trophy Button (doesn't have progress or selection)
-            ActionButton(
+            Button{
+                showSheet.toggle()
+            }label: {
+                ActionButton(
                 isSelected: .constant(false), // always unselected
                 imageName: "trophy",
                 progress: .constant(0.0),
-                onSecondTap: {} // no action on second tap
+                onSecondTap: {}, // no action on second tap
+                //                action: {
+                //                    showSheet.toggle()
+                //                },
             )
+        }
+            .sheet(isPresented: $showSheet) {
+                BottomSheetView()
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
+            }
+            
 
             // Streak Button
             ActionButton(
@@ -165,6 +181,8 @@ struct ActionButton: View {
     // Tracks whether this specific button is selected
     @Binding var isSelected: Bool
     
+    var onTap: (() -> Void)? = nil
+    
     // Name of the image to display
     var imageName: String
     
@@ -180,6 +198,9 @@ struct ActionButton: View {
                 // If already selected, it's a second tap
                 if isSelected {
                     onSecondTap()
+                }
+                else {
+                    onTap?()
                 }
                 // Toggle selection
                 isSelected.toggle()
@@ -367,6 +388,88 @@ struct InsightCard<Content: View>: View {
         .background(Color.white)
         .cornerRadius(12)
         .shadow(color: .gray.opacity(0.2), radius: 4, x: 0, y: 2)
+    }
+}
+
+struct BottomSheetView: View {
+    @Environment(\.dismiss) var dismiss
+    let items = ["redTie", "redTie", "ring", "nicless"]
+    let columns = [
+        GridItem(.flexible()),
+        GridItem(.flexible())
+    ]
+    
+    var body: some View {
+        ZStack {
+            Color(red: 237/255, green: 225/255, blue: 198/255)
+                .ignoresSafeArea()
+            
+            VStack(spacing: 20) {
+                HStack {
+                    Text("Trophies")
+                        .font(.custom("GNF", size: 40))
+                        .fontWeight(.bold)
+                        .foregroundColor(Color(red: 47/255, green: 47/255, blue: 75/255))
+                    Image("trophy")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 60, height: 60)
+                }
+                
+                Text("Every workout earns you coins—spend them on special accessories to celebrate your progress!")
+                    .font(.custom("GNF", size: 20))
+                    .foregroundColor(Color(red: 208/255, green: 127/255, blue: 116/255))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+                
+                VStack {
+                    LazyVGrid(columns: columns, spacing: 16) {
+                        ForEach(items.indices, id: \.self) { index in
+                            TrophyTile(imageName: items[index])
+                        }
+                    }
+                    .padding()
+                }
+                .background(Color.white)
+                .cornerRadius(16)
+                .padding(.horizontal)
+                
+                Spacer()
+                
+            }
+            .padding()
+            
+            
+        }
+    }
+    
+    struct TrophyTile: View {
+        var imageName: String
+        
+        var body: some View {
+            VStack(spacing: 8) {
+                Image(imageName)
+                    .resizable()
+                    .interpolation(.none)
+                    .scaledToFit()
+                    .frame(height: 60)
+                
+                HStack(spacing: 4) {
+                    Image("coins")
+                        .resizable()
+                        .frame(width: 14, height: 14)
+                        .foregroundColor(.yellow)
+                    
+                    Text("20")
+                        .font(.custom("GNF", size: 16))
+                        .foregroundColor(.black)
+                }
+            }
+            .padding(8)
+            .frame(maxWidth: .infinity)
+            .background(Color(red: 237/255, green: 225/255, blue: 198/255))
+            .cornerRadius(8)
+        }
     }
 }
 
