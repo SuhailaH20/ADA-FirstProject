@@ -6,6 +6,7 @@ struct SetUp: View {
     @State private var selectedGoal: String? = nil
     @State private var isGoalDropdownOpen: Bool = false
     @State private var breakDayCount = 0
+    @State private var goNotification: Bool = false
 
     let goals: [String] = [
         "Build muscle and improve physical fitness" ,"Practice regularly without missing planned sessions","Do sport multiple times a week","Stay hydrated on training days","Do yoga","RWalk 10,000 steps daily", "Lose 10 kg through regular sports", "Play basketball consistently","Eating healthy foods", "Reduce stress and improve mental well being","Try a new sport this month","Eat vegetables with every meal"
@@ -58,8 +59,8 @@ struct SetUp: View {
                         .font(.custom("GNF", size: 20))
                             .foregroundColor(Color(red: 47/255, green: 47/255, blue: 75/255))
 
-                        Stepper(value: $breakDayCount, in: 0...5) {
-                            Text("\(breakDayCount) day\(breakDayCount == 1 ? "" : "s")")
+                        Stepper(value: $breakDayCount, in: 0...3) {
+                            Text("\(breakDayCount) Day\(breakDayCount == 1 ? "" : "s")")
                                 .font(.custom("GNF", size: 18))
                                 .foregroundColor(Color(red: 47/255, green: 47/255, blue: 75/255))
                         }
@@ -80,14 +81,21 @@ struct SetUp: View {
                     print("Goal: \(selectedGoal ?? "None")")
                     print("Breakdays: \(breakDayCount)")
                 }) {
-                    ZStack {
-                        Image("Rectangle")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
+                    Button(action: { goNotification = true
+                    }) {
                         Text("Continue")
-                            .font(.custom("GNF", size: 22))
-                            .foregroundColor(.white)
+                            .font(.custom("GNF", size: 21))
+                            .foregroundStyle(Color.white)
+                            .frame(width: 350, height: 49)
+                            .background(Color.brandNavy)
+                            .cornerRadius(5)
                     }
+                    .navigationDestination(isPresented: $goNotification) {
+                        NotificationPawUp()
+                            .navigationBarBackButtonHidden(true)
+                 
+                    }
+                    
                 }
             }
         }

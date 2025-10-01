@@ -26,13 +26,15 @@ enum Buddy: String, CaseIterable, Identifiable {
 struct pickyourbuddy: View {
     @State private var selectedBuddy: Buddy? = nil
     @State private var petName: String = ""
-    
+    @State private var goSetUp = false
+
     var body: some View {
-        ZStack {
-            Color(red: 0xFD/255, green: 0xF8/255, blue: 0xEF/255)
-                .ignoresSafeArea()
+        NavigationStack {
+            ZStack {
+                Color(red: 0xFD/255, green: 0xF8/255, blue: 0xEF/255)
+                    .ignoresSafeArea()
                 
-            VStack(spacing: 2) {
+                VStack(spacing: 2) {
                     
                     Text("Choose your Buddy!")
                         .font(.custom("GNF", size: 35))
@@ -85,18 +87,24 @@ struct pickyourbuddy: View {
                     
                     Spacer()
                     
-                Button(action: {
-                }) {
-                    Text("Continue")
-                        .font(.custom("GNF", size: 21))
-                        .foregroundStyle(Color.white)
-                        .frame(width: 350, height: 49)
-                        .background(Color.brandNavy)
-                        .cornerRadius(5)
-                }
+                    Button(action: {
+                        goSetUp=true
+                    }) {
+                        Text("Continue")
+                            .font(.custom("GNF", size: 21))
+                            .foregroundStyle(Color.white)
+                            .frame(width: 350, height: 49)
+                            .background(Color.brandNavy)
+                            .cornerRadius(5)
+                    }
+                    
                 }
                 .padding()
-        
+                
+            }
+            .navigationDestination(isPresented: $goSetUp) {
+                SetUp()
+            }
         }
         }
         
@@ -106,4 +114,3 @@ struct pickyourbuddy: View {
 #Preview {
     pickyourbuddy()
 }
-
