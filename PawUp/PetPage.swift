@@ -88,111 +88,172 @@ struct BuddyCardView: View {
 }
 
 
+//  Main View that holds all the Action Buttons
 struct ActionButtonView: View {
+    
+    // Keeps track of which button is currently selected ("streak", "breakday", etc.)
     @State private var selectedButton: String? = nil
+    
+    // Progress for the "Streak" button (ranges from 0.0 to 5.0)
     @State private var streakProgress: CGFloat = 0.0
+    
+    // Progress for the "Breakday" button (ranges from 0.0 to 5.0)
     @State private var breakDayProgress: CGFloat = 0.0
+    
+    // Controls whether the break day confirmation alert is shown
+    @State private var showBreakdayConfirmation: Bool = false
 
     var body: some View {
         HStack(spacing: 40) {
+            
+            // Trophy Button (doesn't have progress or selection)
             ActionButton(
-                isSelected: .constant(false),
+                isSelected: .constant(false), // always unselected
                 imageName: "trophy",
-                progress: .constant(0.0)
+                progress: .constant(0.0),
+                onSecondTap: {} // no action on second tap
             )
 
+            // Streak Button
             ActionButton(
                 isSelected: Binding(
-                    get: { selectedButton == "streak" },
-                    set: { selectedButton = $0 ? "streak" : nil }
+                    get: { selectedButton == "streak" }, // selected if "streak" is current
+                    set: { selectedButton = $0 ? "streak" : nil } // set or unset selection
                 ),
                 imageName: "Streak",
-                progress: $streakProgress
+                progress: $streakProgress, // bind to streak progress
+                onSecondTap: {} // add custom behavior if needed
             )
 
+            // Breakday Button
             ActionButton(
                 isSelected: Binding(
-                    get: { selectedButton == "breakday" },
-                    set: { selectedButton = $0 ? "breakday" : nil }
+                    get: { selectedButton == "breakday" }, // selected if "breakday" is current
+                    set: { newValue in
+                        // If already selected and tapped again, show confirmation
+                        if selectedButton == "breakday" {
+                            showBreakdayConfirmation = true
+                        }
+                        // Set or unset selection
+                        selectedButton = newValue ? "breakday" : nil
+                    }
                 ),
                 imageName: "breakday",
-                progress: $breakDayProgress
+                progress: $breakDayProgress, // bind to breakday progress
+                onSecondTap: {
+                    // Show alert when tapped again while selected
+                    showBreakdayConfirmation = true
+                }
             )
+        }
+        // Show confirmation alert when breakday is tapped twice
+        .alert("Use a break day?", isPresented: $showBreakdayConfirmation) {
+            Button("Yes", role: .destructive) {
+                // Increase progress if confirmed (max 5 can be added later)
+                breakDayProgress += 1
+            }
+            Button("Cancel", role: .cancel) {} // Dismiss alert
         }
     }
 }
 
+//
+// Reusable Action Button
+//
 struct ActionButton: View {
+    
+    // Tracks whether this specific button is selected
     @Binding var isSelected: Bool
+    
+    // Name of the image to display
     var imageName: String
+    
+    // Progress value (from 0.0 to 5.0)
     @Binding var progress: CGFloat
+    
+    // What to do when the selected button is tapped again
+    var onSecondTap: () -> Void
 
     var body: some View {
         Button(action: {
             withAnimation {
+                // If already selected, it's a second tap
+                if isSelected {
+                    onSecondTap()
+                }
+                // Toggle selection
                 isSelected.toggle()
             }
         }) {
             ZStack {
+                // Background box with shadow
                 Rectangle()
-                    .fill(Color(red: 0.9, green: 0.8, blue: 0.6))
-                    .frame(width: isSelected ? 140 : 80, height: 80)
+                    .fill(Color(red: 0.9, green: 0.8, blue: 0.6)) // Light beige color
+                    .frame(width: isSelected ? 140 : 80, height: 80) // Expand if selected
                     .aspectRatio(contentMode: .fit)
                     .cornerRadius(10)
                     .shadow(radius: 2)
 
                 HStack(spacing: 10) {
+                    // Icon image
                     Image(imageName)
                         .resizable()
                         .scaledToFit()
                         .frame(width: 60, height: 60)
 
+                    // Show progress only when selected
                     if isSelected {
-                        ZStack() {
+                        ZStack {
+                            // Custom progress bar, divided by 5 to make 0.0–1.0 range
                             CustomProgressBar(progress: progress / 5.0)
                                 .frame(width: 50, height: 20)
 
+                            // Display progress number
                             Text("\(Int(progress))/5")
-                                                            .font(.custom("GNF", size: 14).weight(.bold))
-                                                            .foregroundColor(Color(red: 0x2F/255, green: 0x2F/255, blue: 0x4B/255))
-
-
+                                .font(.custom("GNF", size: 14).weight(.bold))
+                                .foregroundColor(Color(red: 0x2F/255, green: 0x2F/255, blue: 0x4B/255))
                         }
+                        // Animation when appearing
                         .transition(.move(edge: .leading).combined(with: .opacity))
-                        
-                        
-
                     }
                 }
             }
         }
-        .buttonStyle(PlainButtonStyle())
+        .buttonStyle(PlainButtonStyle()) // Remove default button styling
     }
 }
 
+//
+// Custom Progress Bar View
+//
 struct CustomProgressBar: View {
-    var progress: CGFloat // from 0.0 to 1.0
+    
+    // The progress value from 0.0 to 1.0
+    var progress: CGFloat
 
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .leading) {
+                
+                // Background of the progress bar
                 Rectangle()
-                    .fill(Color(red: 0xD1/255, green: 0x7F/255, blue: 0x74/255)) // Changed to #D17F74
+                    .fill(Color(red: 0xD1/255, green: 0x7F/255, blue: 0x74/255)) // #D17F74
                     .frame(width: geometry.size.width, height: geometry.size.height)
 
+                // Filled portion based on progress
                 Rectangle()
-                    .fill(Color(red: 0.9, green: 0.4, blue: 0.4))
+                    .fill(Color(red: 0.9, green: 0.4, blue: 0.4)) // A darker red
                     .frame(width: geometry.size.width * progress, height: geometry.size.height)
             }
             .cornerRadius(2)
+            // Add border around the progress bar
             .overlay(
-                           RoundedRectangle(cornerRadius: 2)
-                               .stroke(Color(red: 0x2F/255, green: 0x2F/255, blue: 0x4B/255), lineWidth: 3) // Updated stroke color to #2F2F4B
-                       )
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color(red: 0x2F/255, green: 0x2F/255, blue: 0x4B/255), lineWidth: 3) // #2F2F4B
+            )
         }
     }
 }
-
 
 
 
