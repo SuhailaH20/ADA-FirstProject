@@ -24,8 +24,9 @@ enum Buddy: String, CaseIterable, Identifiable {
 }
 
 struct pickyourbuddy: View {
+    @AppStorage("petName") var petName: String = ""
+
     @State private var selectedBuddy: Buddy? = nil
-    @State private var petName: String = ""
     @State private var goSetUp = false
 
     var body: some View {
