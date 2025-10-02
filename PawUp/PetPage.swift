@@ -103,33 +103,24 @@ struct ActionButtonView: View {
     // Controls whether the break day confirmation alert is shown
     @State private var showBreakdayConfirmation: Bool = false
     //
-    @State private var showSheet = false
+    @State private var showTrophySheet: Bool = false
 
 
     var body: some View {
         HStack(spacing: 40) {
             
             // Trophy Button (doesn't have progress or selection)
-            Button{
-                showSheet.toggle()
-            }label: {
+            
                 ActionButton(
-                isSelected: .constant(false), // always unselected
+                isSelected: .constant(true),
                 imageName: "trophy",
                 progress: .constant(0.0),
-                onSecondTap: {}, // no action on second tap
-                //                action: {
-                //                    showSheet.toggle()
-                //                },
+                onSecondTap: {
+                    showTrophySheet = true
+                }
+                
             )
-        }
-            .sheet(isPresented: $showSheet) {
-                BottomSheetView()
-                    .presentationDetents([.medium, .large])
-                    .presentationDragIndicator(.visible)
-            }
             
-
             // Streak Button
             ActionButton(
                 isSelected: Binding(
@@ -170,6 +161,9 @@ struct ActionButtonView: View {
             }
             Button("Cancel", role: .cancel) {} // Dismiss alert
         }
+        .sheet(isPresented: $showTrophySheet) {
+            BottomSheetView()
+        }
     }
 }
 
@@ -181,7 +175,6 @@ struct ActionButton: View {
     // Tracks whether this specific button is selected
     @Binding var isSelected: Bool
     
-    var onTap: (() -> Void)? = nil
     
     // Name of the image to display
     var imageName: String
@@ -199,9 +192,7 @@ struct ActionButton: View {
                 if isSelected {
                     onSecondTap()
                 }
-                else {
-                    onTap?()
-                }
+                
                 // Toggle selection
                 isSelected.toggle()
             }
@@ -391,9 +382,9 @@ struct InsightCard<Content: View>: View {
     }
 }
 
+
 struct BottomSheetView: View {
-    @Environment(\.dismiss) var dismiss
-    let items = ["redTie", "redTie", "ring", "nicless"]
+    let items = ["necklace", "redTie", "pinkTie"]
     let columns = [
         GridItem(.flexible()),
         GridItem(.flexible())
@@ -416,7 +407,7 @@ struct BottomSheetView: View {
                         .frame(width: 60, height: 60)
                 }
                 
-                Text("Every workout earns you coins—spend them on special accessories to celebrate your progress!")
+                Text("Every workout earns you coins spend them on special accessories to celebrate your progress!")
                     .font(.custom("GNF", size: 20))
                     .foregroundColor(Color(red: 208/255, green: 127/255, blue: 116/255))
                     .multilineTextAlignment(.center)
@@ -454,15 +445,16 @@ struct BottomSheetView: View {
                     .scaledToFit()
                     .frame(height: 60)
                 
-                HStack(spacing: 4) {
+                ZStack {
                     Image("coins")
                         .resizable()
-                        .frame(width: 14, height: 14)
-                        .foregroundColor(.yellow)
+                        .frame(width: 60, height: 24)
                     
                     Text("20")
                         .font(.custom("GNF", size: 16))
                         .foregroundColor(.black)
+                        .offset(x: 4, y: 0)
+                    
                 }
             }
             .padding(8)
@@ -471,8 +463,8 @@ struct BottomSheetView: View {
             .cornerRadius(8)
         }
     }
+    
 }
-
 
 #Preview {
     PetPage()
