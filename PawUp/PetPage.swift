@@ -9,10 +9,16 @@ import SwiftUI
 
 struct PetPage: View {
     // To display the goal taken
+    
+    
+    
+    
+    
     @AppStorage("selectedGoal") var storedGoal: String = ""
     @AppStorage("petName") private var petName: String = ""
     @AppStorage("selectedBuddy") private var selectedBuddyID: String = ""
 
+    @StateObject private var streakManager = StreakManager()
 
 
     var body: some View {
@@ -36,10 +42,10 @@ struct PetPage: View {
                         .offset(y: 40)
                 }
                 
-                ExerciseView()
+                ExerciseView(streakManager: streakManager)
                         .padding(.top, 60)
                 
-                InsightsSection()
+                InsightsSection(streakManager: streakManager)
                
 
 
@@ -63,6 +69,7 @@ struct coinsView: View {
     }
     
 }
+
 
 struct BuddyCardView: View {
     @AppStorage("selectedBuddy") private var selectedBuddyID: String = ""
@@ -118,16 +125,9 @@ struct ActionButtonView: View {
         HStack(spacing: 40) {
             
             // Trophy Button (doesn't have progress or selection)
-            
-                ActionButton(
-                isSelected: .constant(true),
-                imageName: "trophy",
-                progress: .constant(0.0),
-                onSecondTap: {
-                    showTrophySheet = true
-                }
-                
-            )
+            TrophyButton {
+                showTrophySheet = true
+            }
             
             // Streak Button
             ActionButton(
@@ -243,6 +243,29 @@ struct ActionButton: View {
     }
 }
 
+// Trophy Button (no progress bar, just the icon)
+struct TrophyButton: View {
+    var onTap: () -> Void
+    
+    var body: some View {
+        Button(action: {
+            onTap()
+        }) {
+            Rectangle()
+                .fill(Color(red: 0.9, green: 0.8, blue: 0.6))
+                .frame(width: 80, height: 80)
+                .cornerRadius(10)
+                .shadow(radius: 2)
+                .overlay(
+                    Image("trophy")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 60, height: 60)
+                )
+        }
+    }
+}
+
 //
 // Custom Progress Bar View
 //
@@ -279,7 +302,8 @@ struct CustomProgressBar: View {
 
 struct ExerciseView: View {
     @State private var isChecked: Bool = false
-       
+    @ObservedObject var streakManager: StreakManager
+    
        var body: some View {
            HStack {
                VStack() {
@@ -308,28 +332,34 @@ struct ExerciseView: View {
                Spacer()
                
                Button(action: {
+                   streakManager.resetIfMissed()  // Reset streak if missed before checking in
                    isChecked.toggle()
+                   if isChecked {
+                       streakManager.checkInToday()
+                   }
                }) {
                    Image(systemName: isChecked ? "checkmark.square.fill" : "square")
                        .resizable()
                        .frame(width: 26, height: 26)
                        .foregroundColor(isChecked ? Color(red: 0xC7/255, green: 0xAA/255, blue: 0x82/255) : .white)
                }
-           }
-           .padding()
-           .background(Color.brandNavy)
-           .cornerRadius(5)
-           .padding(.horizontal, 20)
-       }
-}
+
+             }
+             .padding()
+             .background(Color.brandNavy)
+             .cornerRadius(5)
+             .padding(.horizontal, 20)
+         }
+     }
 
 struct InsightsSection: View {
-    @AppStorage("selectedGoal")  var storedGoal: String = ""
+    @ObservedObject var streakManager: StreakManager
+    
+    @AppStorage("selectedGoal") var storedGoal: String = ""
     var dailyGoal: CGFloat = 3.5
     var dailyGoalMax: CGFloat = 5
     var petLevel: Int = 4
     var maxPetLevel: Int = 10
-    var streakDays: Int = 12
 
     let columns = [
         GridItem(.flexible()),
@@ -345,14 +375,13 @@ struct InsightsSection: View {
 
             LazyVGrid(columns: columns, spacing: 20) {
                 InsightCard(title: "Daily Goal") {
-
                     Text(storedGoal.isEmpty ? "" : storedGoal)
                         .font(.custom("GNF", size: 20))
                         .foregroundColor(.gray)
                 }
 
                 InsightCard(title: "Streak") {
-                    Text("\(streakDays) days")
+                    Text("\(streakManager.streakDays) days")
                         .font(.custom("GNF", size: 20))
                         .foregroundColor(Color(red: 0.9, green: 0.4, blue: 0.4))
                         .fontWeight(.bold)
@@ -367,6 +396,7 @@ struct InsightsSection: View {
         .padding(.top, 40)
     }
 }
+
 struct InsightCard<Content: View>: View {
     let title: String
     let content: Content
@@ -388,6 +418,20 @@ struct InsightCard<Content: View>: View {
         .background(Color.white)
         .cornerRadius(12)
         .shadow(color: .gray.opacity(0.2), radius: 4, x: 0, y: 2)
+    }
+}
+
+struct ContentView: View {
+    @StateObject private var streakManager = StreakManager()
+
+    var body: some View {
+        VStack {
+            ExerciseView(streakManager: streakManager)
+            InsightsSection(streakManager: streakManager)
+        }
+        .onAppear {
+            streakManager.resetIfMissed()
+        }
     }
 }
 
@@ -425,7 +469,9 @@ struct BottomSheetView: View {
                 VStack {
                     LazyVGrid(columns: columns, spacing: 16) {
                         ForEach(items.indices, id: \.self) { index in
-                            TrophyTile(imageName: items[index])
+                            TrophyTile(imageName: items[index]) {
+                                print("\(items[index]) tapped!")
+                            }
                         }
                     }
                     .padding()
@@ -445,36 +491,41 @@ struct BottomSheetView: View {
     
     struct TrophyTile: View {
         var imageName: String
+        var onTap: () -> Void = {} // callback when tapped
         
         var body: some View {
-            VStack(spacing: 8) {
-                Image(imageName)
-                    .resizable()
-                    .interpolation(.none)
-                    .scaledToFit()
-                    .frame(height: 60)
-                
-                ZStack {
-                    Image("coins")
+            Button(action: {
+                onTap() // call when tapped
+            }) {
+                VStack(spacing: 8) {
+                    // Trophy image
+                    Image(imageName)
                         .resizable()
-                        .frame(width: 60, height: 24)
+                        .interpolation(.none)
+                        .scaledToFit()
+                        .frame(height: 60)
                     
-                    Text("20")
-                        .font(.custom("GNF", size: 16))
-                        .foregroundColor(.black)
-                        .offset(x: 4, y: 0)
-                    
+                    // Coin label
+                    ZStack {
+                        Image("coins")
+                            .resizable()
+                            .frame(width: 60, height: 24)
+                        
+                        Text("20")
+                            .font(.custom("GNF", size: 16))
+                            .foregroundColor(.black)
+                            .offset(x: 4, y: 0)
+                    }
                 }
+                .padding(8)
+                .frame(maxWidth: .infinity)
+                .background(Color(red: 237/255, green: 225/255, blue: 198/255))
+                .cornerRadius(8)
             }
-            .padding(8)
-            .frame(maxWidth: .infinity)
-            .background(Color(red: 237/255, green: 225/255, blue: 198/255))
-            .cornerRadius(8)
+            .buttonStyle(PlainButtonStyle()) // removes default blue highlight
         }
     }
-    
 }
-
 #Preview {
     PetPage()
 }
