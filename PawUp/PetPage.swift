@@ -9,7 +9,10 @@ import SwiftUI
 
 struct PetPage: View {
     // To display the goal taken
-    @AppStorage("selectedGoal") var storedGoal: String = "" 
+    @AppStorage("selectedGoal") var storedGoal: String = ""
+    @AppStorage("petName") private var petName: String = ""
+    @AppStorage("selectedBuddy") private var selectedBuddyID: String = ""
+
 
 
     var body: some View {
@@ -62,6 +65,7 @@ struct coinsView: View {
 }
 
 struct BuddyCardView: View {
+    @AppStorage("selectedBuddy") private var selectedBuddyID: String = ""
     var body: some View {
         ZStack(alignment: .leading) {
             // Background image as a card
@@ -79,7 +83,7 @@ struct BuddyCardView: View {
 
                 Spacer(minLength: 20)
 
-                Image("cat_image")
+                Image("\(selectedBuddyID)_image")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 150, height: 150)
