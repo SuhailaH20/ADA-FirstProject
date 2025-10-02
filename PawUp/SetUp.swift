@@ -27,6 +27,11 @@ struct SetUp: View {
         "Try a new sport this month",
         "Eat vegetables with every meal"
     ]
+    
+    var isFormValid: Bool {
+        return !name.isEmpty && !(selectedGoal ?? storedGoal).isEmpty
+    }
+    
         
     var body: some View {
         ZStack {
@@ -106,9 +111,10 @@ struct SetUp: View {
                         .font(.custom("GNF", size: 21))
                         .foregroundStyle(Color.white)
                         .frame(width: 350, height: 49)
-                        .background(Color.brandNavy)
+                        .background(isFormValid ? Color.brandNavy : Color.gray)
                         .cornerRadius(5)
                 }
+                .disabled(!isFormValid)
                 .navigationDestination(isPresented: $goNotification) {
                     NotificationPawUp()
                         .navigationBarBackButtonHidden(true)
@@ -159,7 +165,7 @@ struct SetUp: View {
                             ForEach(options, id: \.self) { option in
                                 Button(action: {
                                     selectedOption.wrappedValue = option
-                                    storedGoal = option   // ✅ save directly
+                                    storedGoal = option
                                 }) {
                                     HStack {
                                         Image(systemName: (selectedOption.wrappedValue ?? storedGoal) == option ? "largecircle.fill.circle" : "circle")
