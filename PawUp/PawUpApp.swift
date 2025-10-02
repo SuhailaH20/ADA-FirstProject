@@ -11,7 +11,22 @@ import SwiftUI
 struct PawUpApp: App {
     var body: some Scene {
         WindowGroup {
-           NotificationPawUp()
+           RootView()
+        }
+    }
+}
+
+
+
+struct RootView: View {
+    @AppStorage("didCompleteOnboarding") private var didCompleteOnboarding = false
+    
+    var body: some View {
+        if didCompleteOnboarding {
+            PetPage()
+        } else {
+            // 🟢 Start onboarding flow
+            pickyourbuddy()
         }
     }
 }

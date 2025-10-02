@@ -2,13 +2,30 @@ import SwiftUI
 
 struct SetUp: View {
     
-    @State private var name: String = ""
+    // Persisted values across app launch
+    @AppStorage("name") var name: String = ""
+    @AppStorage("selectedGoal") var storedGoal: String = ""
+    @AppStorage("breakDayCount") var storedBreakDays: Int = 0
+    
+    // Local state for UI
     @State private var selectedGoal: String? = nil
     @State private var isGoalDropdownOpen: Bool = false
     @State private var breakDayCount = 0
+    @State private var goNotification: Bool = false
 
     let goals: [String] = [
-        "Build muscle and improve physical fitness" ,"Practice regularly without missing planned sessions","Do sport multiple times a week","Stay hydrated on training days","Do yoga","RWalk 10,000 steps daily", "Lose 10 kg through regular sports", "Play basketball consistently","Eating healthy foods", "Reduce stress and improve mental well being","Try a new sport this month","Eat vegetables with every meal"
+        "Build muscle and improve physical fitness",
+        "Practice regularly without missing planned sessions",
+        "Do sport multiple times a week",
+        "Stay hydrated on training days",
+        "Do yoga",
+        "Walk 10,000 steps daily",
+        "Lose 10 kg through regular sports",
+        "Play basketball consistently",
+        "Eat healthy foods",
+        "Reduce stress and improve mental well being",
+        "Try a new sport this month",
+        "Eat vegetables with every meal"
     ]
         
     var body: some View {
@@ -31,6 +48,7 @@ struct SetUp: View {
                 
                 VStack(alignment: .leading, spacing: 16) {
                     
+                    // Name field
                     Text("Name:")
                         .font(.custom("GNF", size: 20))
                         .foregroundColor(Color(red: 47/255, green: 47/255, blue: 75/255))
@@ -44,56 +62,62 @@ struct SetUp: View {
                                 .stroke(Color(red: 216/255, green: 184/255, blue: 135/255), lineWidth: 2)
                         )
                     
+                    // Goals dropdown
                     Text("Goals:")
                         .font(.custom("GNF", size: 20))
                         .foregroundColor(Color(red: 47/255, green: 47/255, blue: 75/255))
+                    
                     customDropdown(
-                        label: selectedGoal ?? "Select your goal",
+                        label: selectedGoal ?? (storedGoal.isEmpty ? "Select your goal" : storedGoal),
                         isOpen: $isGoalDropdownOpen,
                         options: goals,
                         selectedOption: $selectedGoal
                     )
                     
+                    // Breakdays
                     Text("Breakdays:")
                         .font(.custom("GNF", size: 20))
-                            .foregroundColor(Color(red: 47/255, green: 47/255, blue: 75/255))
+                        .foregroundColor(Color(red: 47/255, green: 47/255, blue: 75/255))
 
-                        Stepper(value: $breakDayCount, in: 0...5) {
-                            Text("\(breakDayCount) day\(breakDayCount == 1 ? "" : "s")")
-                                .font(.custom("GNF", size: 18))
-                                .foregroundColor(Color(red: 47/255, green: 47/255, blue: 75/255))
-                        }
-                        .padding()
-                        .background(Color.white)
-                        .cornerRadius(5)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 5)
-                                .stroke(Color(red: 216/255, green: 184/255, blue: 135/255), lineWidth: 2)
-                        )
+                    Stepper(value: $breakDayCount, in: 0...3) {
+                        Text("\(breakDayCount) Day\(breakDayCount == 1 ? "" : "s")")
+                            .font(.custom("GNF", size: 18))
+                            .foregroundColor(Color(red: 47/255, green: 47/255, blue: 75/255))
+                    }
+                    .padding()
+                    .background(Color.white)
+                    .cornerRadius(5)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 5)
+                            .stroke(Color(red: 216/255, green: 184/255, blue: 135/255), lineWidth: 2)
+                    )
                 }
                 .padding(.horizontal)
                 
                 Spacer()
                 
+                // Continue button (saves + navigates)
                 Button(action: {
-                    print("Name: \(name)")
-                    print("Goal: \(selectedGoal ?? "None")")
-                    print("Breakdays: \(breakDayCount)")
+                    storedGoal = selectedGoal ?? storedGoal
+                    storedBreakDays = breakDayCount
+                    goNotification = true
                 }) {
-                    ZStack {
-                        Image("Rectangle")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                        Text("Continue")
-                            .font(.custom("GNF", size: 22))
-                            .foregroundColor(.white)
-                    }
+                    Text("Continue")
+                        .font(.custom("GNF", size: 21))
+                        .foregroundStyle(Color.white)
+                        .frame(width: 350, height: 49)
+                        .background(Color.brandNavy)
+                        .cornerRadius(5)
+                }
+                .navigationDestination(isPresented: $goNotification) {
+                    NotificationPawUp()
+                        .navigationBarBackButtonHidden(true)
                 }
             }
         }
-        
     }
     
+    // MARK: - Custom Dropdown
     @ViewBuilder
     func customDropdown(label: String, isOpen: Binding<Bool>, options: [String], selectedOption: Binding<String?>, otherDropdown: Binding<Bool>? = nil) -> some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -108,8 +132,7 @@ struct SetUp: View {
                 HStack {
                     Text(label)
                         .font(.custom("GNF", size: 18))
-                        .foregroundColor(selectedOption.wrappedValue == nil
-                            ? .gray : Color(red: 47 / 255, green: 47 / 255, blue: 75 / 255))
+                        .foregroundColor(label == "Select your goal" ? .gray : Color(red: 47/255, green: 47/255, blue: 75/255))
                         .lineLimit(1)
                         .truncationMode(.tail)
 
@@ -136,9 +159,10 @@ struct SetUp: View {
                             ForEach(options, id: \.self) { option in
                                 Button(action: {
                                     selectedOption.wrappedValue = option
+                                    storedGoal = option   // ✅ save directly
                                 }) {
                                     HStack {
-                                        Image(systemName: selectedOption.wrappedValue == option ? "largecircle.fill.circle" : "circle")
+                                        Image(systemName: (selectedOption.wrappedValue ?? storedGoal) == option ? "largecircle.fill.circle" : "circle")
                                             .foregroundColor(Color(red: 208/255, green: 127/255, blue: 116/255))
                                         Text(option)
                                             .font(.custom("GNF", size: 18))
@@ -176,19 +200,8 @@ struct SetUp: View {
             }
         }
     }
-
-
-
-    
-    func toggleSelection(_ option: String, selectedSet: Binding<Set<String>>) {
-        if selectedSet.wrappedValue.contains(option) {
-            selectedSet.wrappedValue.remove(option)
-        } else {
-            selectedSet.wrappedValue.insert(option)
-        }
-    }
 }
 
 #Preview {
-    SetUp( )
+    SetUp()
 }

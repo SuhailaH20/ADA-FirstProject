@@ -71,8 +71,8 @@ class NotificationManager {
 
         // 1. Content for 9:00 PM
         let content9PM = UNMutableNotificationContent()
-        content9PM.title = "Good Night! 🌙"
-        content9PM.body = "It's 9 PM. Don't forget to wrap up your day and save your game progress."
+        content9PM.title = "Your buddy is sad!"
+        content9PM.body = "your pet waited… you didn’t move today!"
         content9PM.sound = UNNotificationSound.default
         
         // 2. Trigger for 9:00 PM
