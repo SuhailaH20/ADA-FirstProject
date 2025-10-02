@@ -25,7 +25,8 @@ enum Buddy: String, CaseIterable, Identifiable {
 
 struct pickyourbuddy: View {
     @AppStorage("petName") var petName: String = ""
-
+    @AppStorage("selectedBuddy") private var storedBuddy: String?
+    
     @State private var selectedBuddy: Buddy? = nil
     @State private var goSetUp = false
 
@@ -47,10 +48,15 @@ struct pickyourbuddy: View {
                         .font(.custom("GNF", size: 20))
                         .foregroundStyle(Color("brandPink"))
                         .multilineTextAlignment(.center)
+                    
+                    // -- Choose Dog or Cat
                     HStack(spacing: 16) {
                         ForEach(Buddy.allCases) { buddy in
                             Button {
-                                withAnimation(.easeInOut(duration: 0.2)) { selectedBuddy = buddy }
+                                withAnimation(.easeInOut(duration: 0.2)) { selectedBuddy = buddy
+                                    storedBuddy = buddy.rawValue
+                                    
+                                }
                             } label: {
                                 Image(buddy.assetName)
                                     .resizable()
