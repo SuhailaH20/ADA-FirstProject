@@ -61,6 +61,7 @@ struct coinsView: View {
     
 }
 
+
 struct BuddyCardView: View {
     var body: some View {
         ZStack(alignment: .leading) {
@@ -114,16 +115,9 @@ struct ActionButtonView: View {
         HStack(spacing: 40) {
             
             // Trophy Button (doesn't have progress or selection)
-            
-                ActionButton(
-                isSelected: .constant(true),
-                imageName: "trophy",
-                progress: .constant(0.0),
-                onSecondTap: {
-                    showTrophySheet = true
-                }
-                
-            )
+            TrophyButton {
+                showTrophySheet = true
+            }
             
             // Streak Button
             ActionButton(
@@ -236,6 +230,29 @@ struct ActionButton: View {
             }
         }
         .buttonStyle(PlainButtonStyle()) // Remove default button styling
+    }
+}
+
+// Trophy Button (no progress bar, just the icon)
+struct TrophyButton: View {
+    var onTap: () -> Void
+    
+    var body: some View {
+        Button(action: {
+            onTap()
+        }) {
+            Rectangle()
+                .fill(Color(red: 0.9, green: 0.8, blue: 0.6))
+                .frame(width: 80, height: 80)
+                .cornerRadius(10)
+                .shadow(radius: 2)
+                .overlay(
+                    Image("trophy")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 60, height: 60)
+                )
+        }
     }
 }
 
@@ -421,7 +438,9 @@ struct BottomSheetView: View {
                 VStack {
                     LazyVGrid(columns: columns, spacing: 16) {
                         ForEach(items.indices, id: \.self) { index in
-                            TrophyTile(imageName: items[index])
+                            TrophyTile(imageName: items[index]) {
+                                print("\(items[index]) tapped!")
+                            }
                         }
                     }
                     .padding()
@@ -441,36 +460,41 @@ struct BottomSheetView: View {
     
     struct TrophyTile: View {
         var imageName: String
+        var onTap: () -> Void = {} // callback when tapped
         
         var body: some View {
-            VStack(spacing: 8) {
-                Image(imageName)
-                    .resizable()
-                    .interpolation(.none)
-                    .scaledToFit()
-                    .frame(height: 60)
-                
-                ZStack {
-                    Image("coins")
+            Button(action: {
+                onTap() // call when tapped
+            }) {
+                VStack(spacing: 8) {
+                    // Trophy image
+                    Image(imageName)
                         .resizable()
-                        .frame(width: 60, height: 24)
+                        .interpolation(.none)
+                        .scaledToFit()
+                        .frame(height: 60)
                     
-                    Text("20")
-                        .font(.custom("GNF", size: 16))
-                        .foregroundColor(.black)
-                        .offset(x: 4, y: 0)
-                    
+                    // Coin label
+                    ZStack {
+                        Image("coins")
+                            .resizable()
+                            .frame(width: 60, height: 24)
+                        
+                        Text("20")
+                            .font(.custom("GNF", size: 16))
+                            .foregroundColor(.black)
+                            .offset(x: 4, y: 0)
+                    }
                 }
+                .padding(8)
+                .frame(maxWidth: .infinity)
+                .background(Color(red: 237/255, green: 225/255, blue: 198/255))
+                .cornerRadius(8)
             }
-            .padding(8)
-            .frame(maxWidth: .infinity)
-            .background(Color(red: 237/255, green: 225/255, blue: 198/255))
-            .cornerRadius(8)
+            .buttonStyle(PlainButtonStyle()) // removes default blue highlight
         }
     }
-    
 }
-
 #Preview {
     PetPage()
 }
