@@ -9,7 +9,16 @@ import SwiftUI
 
 struct PetPage: View {
     // To display the goal taken
-    @AppStorage("selectedGoal") var storedGoal: String = "" 
+    
+    
+    
+    
+    
+    @AppStorage("selectedGoal") var storedGoal: String = ""
+    @AppStorage("petName") private var petName: String = ""
+    @AppStorage("selectedBuddy") private var selectedBuddyID: String = ""
+
+    @StateObject private var streakManager = StreakManager()
 
 
     var body: some View {
@@ -33,10 +42,10 @@ struct PetPage: View {
                         .offset(y: 40)
                 }
                 
-                ExerciseView()
+                ExerciseView(streakManager: streakManager)
                         .padding(.top, 60)
                 
-                InsightsSection()
+                InsightsSection(streakManager: streakManager)
                
 
 
@@ -63,6 +72,7 @@ struct coinsView: View {
 
 
 struct BuddyCardView: View {
+    @AppStorage("selectedBuddy") private var selectedBuddyID: String = ""
     var body: some View {
         ZStack(alignment: .leading) {
             // Background image as a card
@@ -80,7 +90,7 @@ struct BuddyCardView: View {
 
                 Spacer(minLength: 20)
 
-                Image("cat_image")
+                Image("\(selectedBuddyID)_image")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 150, height: 150)
@@ -292,7 +302,8 @@ struct CustomProgressBar: View {
 
 struct ExerciseView: View {
     @State private var isChecked: Bool = false
-       
+    @ObservedObject var streakManager: StreakManager
+    
        var body: some View {
            HStack {
                VStack() {
@@ -321,28 +332,34 @@ struct ExerciseView: View {
                Spacer()
                
                Button(action: {
+                   streakManager.resetIfMissed()  // Reset streak if missed before checking in
                    isChecked.toggle()
+                   if isChecked {
+                       streakManager.checkInToday()
+                   }
                }) {
                    Image(systemName: isChecked ? "checkmark.square.fill" : "square")
                        .resizable()
                        .frame(width: 26, height: 26)
                        .foregroundColor(isChecked ? Color(red: 0xC7/255, green: 0xAA/255, blue: 0x82/255) : .white)
                }
-           }
-           .padding()
-           .background(Color.brandNavy)
-           .cornerRadius(5)
-           .padding(.horizontal, 20)
-       }
-}
+
+             }
+             .padding()
+             .background(Color.brandNavy)
+             .cornerRadius(5)
+             .padding(.horizontal, 20)
+         }
+     }
 
 struct InsightsSection: View {
-    @AppStorage("selectedGoal")  var storedGoal: String = ""
+    @ObservedObject var streakManager: StreakManager
+    
+    @AppStorage("selectedGoal") var storedGoal: String = ""
     var dailyGoal: CGFloat = 3.5
     var dailyGoalMax: CGFloat = 5
     var petLevel: Int = 4
     var maxPetLevel: Int = 10
-    var streakDays: Int = 12
 
     let columns = [
         GridItem(.flexible()),
@@ -358,14 +375,13 @@ struct InsightsSection: View {
 
             LazyVGrid(columns: columns, spacing: 20) {
                 InsightCard(title: "Daily Goal") {
-
                     Text(storedGoal.isEmpty ? "" : storedGoal)
                         .font(.custom("GNF", size: 20))
                         .foregroundColor(.gray)
                 }
 
                 InsightCard(title: "Streak") {
-                    Text("\(streakDays) days")
+                    Text("\(streakManager.streakDays) days")
                         .font(.custom("GNF", size: 20))
                         .foregroundColor(Color(red: 0.9, green: 0.4, blue: 0.4))
                         .fontWeight(.bold)
@@ -380,6 +396,7 @@ struct InsightsSection: View {
         .padding(.top, 40)
     }
 }
+
 struct InsightCard<Content: View>: View {
     let title: String
     let content: Content
@@ -401,6 +418,20 @@ struct InsightCard<Content: View>: View {
         .background(Color.white)
         .cornerRadius(12)
         .shadow(color: .gray.opacity(0.2), radius: 4, x: 0, y: 2)
+    }
+}
+
+struct ContentView: View {
+    @StateObject private var streakManager = StreakManager()
+
+    var body: some View {
+        VStack {
+            ExerciseView(streakManager: streakManager)
+            InsightsSection(streakManager: streakManager)
+        }
+        .onAppear {
+            streakManager.resetIfMissed()
+        }
     }
 }
 
