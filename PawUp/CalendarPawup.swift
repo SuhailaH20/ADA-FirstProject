@@ -48,7 +48,7 @@ struct DayCell: View {
                         .frame(width: 28, height: 28)
 
                 case .empty:
-                    Image("Star 1")
+                    Image("Star")
                         .resizable()
                         .interpolation(.none)
                         .scaledToFit()
@@ -62,7 +62,7 @@ struct DayCell: View {
     }
 }
 
-struct CalendarView: View {
+struct CalendarPawup: View {
     private let pageBG = Color(red: 0.98, green: 0.96, blue: 0.92)
     private let weekdays = ["S","M","T","W","T","F","S"]
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 14), count: 7)
@@ -206,6 +206,6 @@ struct CalendarView: View {
     }
 }
 #Preview {
-    CalendarView()
+    CalendarPawup()
 }
 
