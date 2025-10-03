@@ -7,12 +7,16 @@
 //areeeg
 import SwiftUI
 
+//Date funtion
+// Returns today's date as a string
+func formattedToday() -> String {
+    let formatter = DateFormatter()
+    formatter.dateFormat = "yyyy-MM-dd"
+    return formatter.string(from: Date())
+}
+
 struct PetPage: View {
     // To display the goal taken
-    
-    
-    
-    
     
     @AppStorage("selectedGoal") var storedGoal: String = ""
     @AppStorage("petName") private var petName: String = ""
@@ -337,6 +341,7 @@ struct ExerciseView: View {
     @State private var isChecked: Bool = false
     @ObservedObject var streakManager: StreakManager
     @AppStorage("coins") private var coins: Int = 0 //total of coins
+    @AppStorage("lastCheckInDate") private var lastCheckInDate: String = "" //
     
        var body: some View {
            HStack {
@@ -368,10 +373,18 @@ struct ExerciseView: View {
                Button(action: {
                    streakManager.resetIfMissed()  // Reset streak if missed before checking in
                    isChecked.toggle()
+                   
                    if isChecked {
                        streakManager.checkInToday()
-                       coins += 1
+                       
+                       let today = formattedToday() //today's date
+                               if lastCheckInDate != today {
+                                   coins += 1 // increase the coins +1
+                                   lastCheckInDate = today     // Save today's date so they can't claim again on the same day
+
+                               }
                    }
+                   
                }) {
                    Image(systemName: isChecked ? "checkmark.square.fill" : "square")
                        .resizable()
