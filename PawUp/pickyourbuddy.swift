@@ -24,10 +24,9 @@ enum Buddy: String, CaseIterable, Identifiable {
 }
 
 struct pickyourbuddy: View {
-    @AppStorage("petName") var petName: String = ""
-    @AppStorage("selectedBuddy") private var storedBuddy: String?
-    
-    @State private var selectedBuddy: Buddy? = nil
+    @AppStorage("petName") private var petName: String = ""
+    @AppStorage("selectedBuddy") private var selectedBuddyID: String = ""
+
     @State private var goSetUp = false
 
     var body: some View {
@@ -35,15 +34,15 @@ struct pickyourbuddy: View {
             ZStack {
                 Color(red: 0xFD/255, green: 0xF8/255, blue: 0xEF/255)
                     .ignoresSafeArea()
-                
+
                 VStack(spacing: 2) {
-                    
+
                     Text("Choose your Buddy!")
                         .font(.custom("GNF", size: 35))
                         .padding(.vertical, 20.0)
                         .foregroundStyle(Color("brandNavy"))
                         .padding(.top,70)
-                    
+
                     Text("Ready to meet your new fitness sidekick?")
                         .font(.custom("GNF", size: 20))
                         .foregroundStyle(Color("brandPink"))
@@ -53,9 +52,8 @@ struct pickyourbuddy: View {
                     HStack(spacing: 16) {
                         ForEach(Buddy.allCases) { buddy in
                             Button {
-                                withAnimation(.easeInOut(duration: 0.2)) { selectedBuddy = buddy
-                                    storedBuddy = buddy.rawValue
-                                    
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    selectedBuddyID = buddy.rawValue   // ← التخزين الفعلي
                                 }
                             } label: {
                                 Image(buddy.assetName)
@@ -64,26 +62,25 @@ struct pickyourbuddy: View {
                                     .frame(width: 130, height: 180)
                                     .padding()
                                     .background(
-                                        RoundedRectangle(cornerRadius:0)
+                                        RoundedRectangle(cornerRadius: 0)
                                             .fill(Color.white.opacity(0))
                                     )
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 10)
-                                            .stroke(selectedBuddy == buddy ? Color("brandPink") : .clear, lineWidth: 3)
+                                            .stroke(selectedBuddyID == buddy.rawValue ? Color("brandPink") : .clear, lineWidth: 3)
                                     )
-                                    .shadow(radius: selectedBuddy == buddy ? 6 : 0)
+                                    .shadow(radius: selectedBuddyID == buddy.rawValue ? 6 : 0)
                             }
                             .buttonStyle(.plain)
                         }
                     }
                     .padding(.horizontal)
-                    
-                    
+
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Pet name")
                             .font(.custom("GNF", size: 20))
                             .foregroundStyle(Color("brandNavy"))
-                        
+
                         TextField("Enter your pet name…", text: $petName)
                             .font(.custom("GNF", size: 20))
                             .padding(14)
@@ -91,12 +88,10 @@ struct pickyourbuddy: View {
                             .shadow(color: .gray.opacity(0.2), radius: 2)
                     }
                     .padding(.horizontal)
-                    
+
                     Spacer()
-                    
-                    Button(action: {
-                        goSetUp=true
-                    }) {
+
+                    Button(action: { goSetUp = true }) {
                         Text("Continue")
                             .font(.custom("GNF", size: 21))
                             .foregroundStyle(Color.white)
@@ -104,19 +99,18 @@ struct pickyourbuddy: View {
                             .background(Color.brandNavy)
                             .cornerRadius(5)
                     }
-                    
+                    .disabled(petName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || selectedBuddyID.isEmpty)
+                    .opacity((petName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || selectedBuddyID.isEmpty) ? 0.6 : 1)
+
                 }
                 .padding()
-                
             }
             .navigationDestination(isPresented: $goSetUp) {
                 SetUp()
             }
         }
-        }
-        
     }
-
+}
 
 #Preview {
     pickyourbuddy()

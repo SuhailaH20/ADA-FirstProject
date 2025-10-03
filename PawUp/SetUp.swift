@@ -165,7 +165,7 @@ struct SetUp: View {
                             ForEach(options, id: \.self) { option in
                                 Button(action: {
                                     selectedOption.wrappedValue = option
-                                    storedGoal = option   // ✅ save directly
+                                    storedGoal = option
                                 }) {
                                     HStack {
                                         Image(systemName: (selectedOption.wrappedValue ?? storedGoal) == option ? "largecircle.fill.circle" : "circle")
