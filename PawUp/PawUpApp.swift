@@ -26,7 +26,7 @@ struct RootView: View {
             PetPage()
         } else {
             // 🟢 Start onboarding flow
-            pickyourbuddy()
+            Splash()
         }
     }
 }

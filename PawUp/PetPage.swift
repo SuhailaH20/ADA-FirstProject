@@ -17,6 +17,7 @@ struct PetPage: View {
     @AppStorage("selectedGoal") var storedGoal: String = ""
     @AppStorage("petName") private var petName: String = ""
     @AppStorage("selectedBuddy") private var selectedBuddyID: String = ""
+    
 
     @StateObject private var streakManager = StreakManager()
 
@@ -73,34 +74,64 @@ struct coinsView: View {
 
 struct BuddyCardView: View {
     @AppStorage("selectedBuddy") private var selectedBuddyID: String = ""
+    @AppStorage("selectedAccessory") private var selectedAccessory: String = "" // add this
+    
     var body: some View {
         ZStack(alignment: .leading) {
             // Background image as a card
             Image("petCard")
                 .resizable()
                 .clipped()
-
+            
             // Content over the image
             HStack(alignment: .center) {
                 Text("Your buddy’s tail is wagging—ready to move?")
                     .font(.custom("GNF", size: 24))
                     .foregroundColor(.white)
-                    .fixedSize(horizontal: false, vertical: true).padding(.bottom)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.bottom)
                     .layoutPriority(1)
-
+                
                 Spacer(minLength: 20)
-
-                Image("\(selectedBuddyID)_image")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 150, height: 150)
+                
+                ZStack {
+                    // Pet base
+                    Image("\(selectedBuddyID)_image")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 150, height: 150)
+                    
+                    // Accessory overlay (if chosen)
+                    if !selectedAccessory.isEmpty {
+                        Image(selectedAccessory)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 62, height: 62)
+                            .offset(accessoryOffsets[selectedBuddyID]?[selectedAccessory] ?? .zero)
+                        
+                    }
+                }
             }
             .padding(20)
         }
-
-        .fixedSize(horizontal: false, vertical: true) // This makes the ZStack shrink-wrap
+        .fixedSize(horizontal: false, vertical: true) // shrink-wrap
     }
+    
+    private let accessoryOffsets: [String: [String: CGSize]] = [
+        "dog":[
+            "necklace": CGSize(width: -8, height:-2),
+            "redTie": CGSize(width: -8, height: 4),
+            "pinkTie": CGSize(width: -8, height: -42)
+            // Add more accessories here and tweak their x/y individually
+        ],
+        "cat": [
+            "necklace": CGSize(width: -15, height: 4),
+            "redTie": CGSize(width: -16, height: 3),
+            "pinkTie": CGSize(width: -15, height: -40)
+        ]
+]
 }
+
 
 
 //  Main View that holds all the Action Buttons
@@ -435,13 +466,15 @@ struct ContentView: View {
     }
 }
 
-
 struct BottomSheetView: View {
     let items = ["necklace", "redTie", "pinkTie"]
     let columns = [
         GridItem(.flexible()),
         GridItem(.flexible())
     ]
+    
+    // Shared storage for selected accessory
+    @AppStorage("selectedAccessory") private var selectedAccessory: String = ""
     
     var body: some View {
         ZStack {
@@ -460,7 +493,7 @@ struct BottomSheetView: View {
                         .frame(width: 60, height: 60)
                 }
                 
-                Text("Every workout earns you coins spend them on special accessories to celebrate your progress!")
+                Text("Every workout earns you coins—spend them on special accessories to celebrate your progress!")
                     .font(.custom("GNF", size: 20))
                     .foregroundColor(Color(red: 208/255, green: 127/255, blue: 116/255))
                     .multilineTextAlignment(.center)
@@ -468,9 +501,17 @@ struct BottomSheetView: View {
                 
                 VStack {
                     LazyVGrid(columns: columns, spacing: 16) {
-                        ForEach(items.indices, id: \.self) { index in
-                            TrophyTile(imageName: items[index]) {
-                                
+                        ForEach(items, id: \.self) { item in
+                            TrophyTile(
+                                imageName: item,
+                                isSelected: selectedAccessory == item
+                            ) {
+                                // Toggle accessory: if already selected, remove it
+                                if selectedAccessory == item {
+                                    selectedAccessory = ""
+                                } else {
+                                    selectedAccessory = item
+                                }
                             }
                         }
                     }
@@ -481,51 +522,49 @@ struct BottomSheetView: View {
                 .padding(.horizontal)
                 
                 Spacer()
-                
             }
             .padding()
-            
-            
         }
     }
     
     struct TrophyTile: View {
         var imageName: String
-        var onTap: () -> Void = {} // callback when tapped
+        var isSelected: Bool = false
+        var onTap: () -> Void = {}
         
         var body: some View {
-            Button(action: {
-                onTap() // call when tapped
-            }) {
+            Button(action: { onTap() }) {
                 VStack(spacing: 8) {
-                    // Trophy image
                     Image(imageName)
                         .resizable()
                         .interpolation(.none)
                         .scaledToFit()
                         .frame(height: 60)
                     
-                    // Coin label
                     ZStack {
                         Image("coins")
                             .resizable()
                             .frame(width: 60, height: 24)
-                        
                         Text("20")
                             .font(.custom("GNF", size: 16))
                             .foregroundColor(.black)
-                            .offset(x: 4, y: 0)
+                            .offset(x: 4)
                     }
                 }
                 .padding(8)
                 .frame(maxWidth: .infinity)
                 .background(Color(red: 237/255, green: 225/255, blue: 198/255))
                 .cornerRadius(8)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 3)
+                )
             }
-            .buttonStyle(PlainButtonStyle()) // removes default blue highlight
+            .buttonStyle(PlainButtonStyle())
         }
     }
 }
+
 #Preview {
     PetPage()
 }

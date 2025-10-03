@@ -2,7 +2,7 @@ import SwiftUI
 
 struct Splash: View {
     @State private var glow = false
-    @State private var navigateToSetup = false
+    @State private var navigateToPickYourBuddy = false
     
     private let starPoints: [(x: CGFloat, y: CGFloat, size: CGFloat)] = [
         (0.08, 0.12, 34), (0.90, 0.12, 30), (0.17, 0.33, 24),
@@ -37,23 +37,23 @@ struct Splash: View {
                         .foregroundColor(Color("BrandSC"))
                         .shadow(radius: 3)
                 }
-                NavigationLink(destination: SetUp(), isActive: $navigateToSetup) {
-                                    EmptyView()
-                                }
-                .onAppear {
-                    withAnimation(Animation.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
-                        glow.toggle()
-                    }
-                    Task {
-                        try? await Task.sleep(for: .seconds(3))
-                        navigateToSetup = true
-                    }
+            }
+            // 👇 Navigation destination setup
+            .navigationDestination(isPresented: $navigateToPickYourBuddy) {
+                pickyourbuddy() .navigationBarBackButtonHidden(true)
+            }
+            .onAppear {
+                withAnimation(Animation.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
+                    glow.toggle()
+                }
+                Task {
+                    try? await Task.sleep(for: .seconds(3))
+                    navigateToPickYourBuddy = true
                 }
             }
         }
     }
 }
-
 
 #Preview {
     Splash()

@@ -51,7 +51,8 @@ struct pickyourbuddy: View {
                         .font(.custom("GNF", size: 20))
                         .foregroundStyle(Color("brandPink"))
                         .multilineTextAlignment(.center)
-
+                    
+                    // -- Choose Dog or Cat
                     HStack(spacing: 16) {
                         ForEach(Buddy.allCases) { buddy in
                             Button {
