@@ -385,33 +385,44 @@ struct ExerciseView: View {
 
 struct InsightsSection: View {
     @ObservedObject var streakManager: StreakManager
-    
     @AppStorage("selectedGoal") var storedGoal: String = ""
-    var dailyGoal: CGFloat = 3.5
-    var dailyGoalMax: CGFloat = 5
-    var petLevel: Int = 4
-    var maxPetLevel: Int = 10
-
-    let columns = [
-        GridItem(.flexible()),
-        GridItem(.flexible())
-    ]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 9.0) {
             Text("Your Insights")
                 .font(.custom("GNF", size: 24))
                 .fontWeight(.bold)
                 .padding(.horizontal, 20)
+                .padding(.vertical, 20)
 
-            LazyVGrid(columns: columns, spacing: 20) {
-                InsightCard(title: "Daily Goal") {
-                    Text(storedGoal.isEmpty ? "" : storedGoal)
+            HStack(alignment: .top, spacing: 10) {
+                // Daily Goal Card - wider
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("🎯 Daily Goal")
+                        .font(.custom("GNF", size: 18))
+                        .fontWeight(.semibold)
+
+                    Text(storedGoal.isEmpty ? "No goal enterd" : storedGoal)
                         .font(.custom("GNF", size: 20))
                         .foregroundColor(.gray)
-                }
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
+                        Spacer().frame(minHeight: 10)
 
-                InsightCard(title: "Streak") {
+                }
+                .padding()
+                .background(Color.white)
+                .cornerRadius(12)
+                .shadow(color: .gray.opacity(0.2), radius: 4, x: 0, y: 2)
+                .frame(maxWidth: .infinity) // Removed maxHeight
+
+                // Streak Card - narrower
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("⚡️ Streak")
+                        .font(.custom("GNF", size: 18))
+                        .fontWeight(.semibold)
+
                     Text("\(streakManager.streakDays) days")
                         .font(.custom("GNF", size: 20))
                         .foregroundColor(Color(red: 0.9, green: 0.4, blue: 0.4))
@@ -420,37 +431,21 @@ struct InsightsSection: View {
                     Text("Keep going!")
                         .font(.custom("GNF", size: 14))
                         .foregroundColor(.gray)
+
+                    Spacer()
                 }
+                .padding()
+                .background(Color.white)
+                .cornerRadius(12)
+                .shadow(color: .gray.opacity(0.2), radius: 4, x: 0, y: 2)
+                .frame(width: 120) // Removed maxHeight
             }
+            .frame(height: 130) // Controls the total height
             .padding(.horizontal, 20)
         }
-        .padding(.top, 40)
     }
 }
 
-struct InsightCard<Content: View>: View {
-    let title: String
-    let content: Content
-
-    init(title: String, @ViewBuilder content: () -> Content) {
-        self.title = title
-        self.content = content()
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 5) {
-            Text(title)
-                .font(.custom("GNF", size: 18))
-                .fontWeight(.semibold)
-
-            content
-        }
-        .padding()
-        .background(Color.white)
-        .cornerRadius(12)
-        .shadow(color: .gray.opacity(0.2), radius: 4, x: 0, y: 2)
-    }
-}
 
 struct ContentView: View {
     @StateObject private var streakManager = StreakManager()
