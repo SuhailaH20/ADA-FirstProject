@@ -43,7 +43,7 @@ struct PetPage: View {
                 //main card and action btn
                 ZStack(alignment: .bottom) {
                     BuddyCardView()
-                    ActionButtonView()
+                    ActionButtonView(streakManager: streakManager)
                         .offset(y: 40)
                 }
                 
@@ -142,75 +142,59 @@ struct BuddyCardView: View {
 
 //  Main View that holds all the Action Buttons
 struct ActionButtonView: View {
-    
-    // Keeps track of which button is currently selected ("streak", "breakday", etc.)
-    @State private var selectedButton: String? = nil
-    
-    // Progress for the "Streak" button (ranges from 0.0 to 5.0)
-    @State private var streakProgress: CGFloat = 0.0
-    
-    // Progress for the "Breakday" button (ranges from 0.0 to 5.0)
-    @State private var breakDayProgress: CGFloat = 0.0
-    
-    // Controls whether the break day confirmation alert is shown
-    @State private var showBreakdayConfirmation: Bool = false
-    //
-    @State private var showTrophySheet: Bool = false
+    @ObservedObject var streakManager: StreakManager
 
+    @State private var selectedButton: String? = nil
+    @State private var breakDayProgress: CGFloat = 0.0
+    @State private var showBreakdayConfirmation: Bool = false
+    @State private var showTrophySheet: Bool = false
 
     var body: some View {
         HStack(spacing: 40) {
-            
-            // Trophy Button (doesn't have progress or selection)
             TrophyButton {
                 showTrophySheet = true
             }
-            
-            // Streak Button
+
+            // Use streakManager.streakDays for progress
             ActionButton(
                 isSelected: Binding(
-                    get: { selectedButton == "streak" }, // selected if "streak" is current
-                    set: { selectedButton = $0 ? "streak" : nil } // set or unset selection
+                    get: { selectedButton == "streak" },
+                    set: { selectedButton = $0 ? "streak" : nil }
                 ),
                 imageName: "Streak",
-                progress: $streakProgress, // bind to streak progress
-                onSecondTap: {} // add custom behavior if needed
+                progress: .constant(CGFloat(min(streakManager.streakDays, 5))), // max 5
+                onSecondTap: {}
             )
 
-            // Breakday Button
             ActionButton(
                 isSelected: Binding(
-                    get: { selectedButton == "breakday" }, // selected if "breakday" is current
-                    set: { newValue in
-                        // If already selected and tapped again, show confirmation
+                    get: { selectedButton == "breakday" },
+                    set: {
                         if selectedButton == "breakday" {
                             showBreakdayConfirmation = true
                         }
-                        // Set or unset selection
-                        selectedButton = newValue ? "breakday" : nil
+                        selectedButton = $0 ? "breakday" : nil
                     }
                 ),
                 imageName: "breakday",
-                progress: $breakDayProgress, // bind to breakday progress
+                progress: $breakDayProgress,
                 onSecondTap: {
-                    // Show alert when tapped again while selected
                     showBreakdayConfirmation = true
                 }
             )
         }
-        // Show confirmation alert when breakday is tapped twice
         .alert("Use a break day?", isPresented: $showBreakdayConfirmation) {
             Button("Yes", role: .destructive) {
-                // Increase progress if confirmed (max 5 can be added later)
                 breakDayProgress += 1
             }
-            Button("Cancel", role: .cancel) {} // Dismiss alert
+            Button("Cancel", role: .cancel) {}
         }
         .sheet(isPresented: $showTrophySheet) {
             BottomSheetView()
         }
     }
 }
+
 
 //
 // Reusable Action Button
@@ -317,19 +301,19 @@ struct CustomProgressBar: View {
                 
                 // Background of the progress bar
                 Rectangle()
-                    .fill(Color(red: 0xD1/255, green: 0x7F/255, blue: 0x74/255)) // #D17F74
+                    .fill(Color("brandBG"))
                     .frame(width: geometry.size.width, height: geometry.size.height)
 
                 // Filled portion based on progress
                 Rectangle()
-                    .fill(Color(red: 0.9, green: 0.4, blue: 0.4)) // A darker red
+                    .fill(Color("brandPink")) // A darker red
                     .frame(width: geometry.size.width * progress, height: geometry.size.height)
             }
             .cornerRadius(2)
             // Add border around the progress bar
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
-                    .stroke(Color(red: 0x2F/255, green: 0x2F/255, blue: 0x4B/255), lineWidth: 3) // #2F2F4B
+                    .stroke(Color(red: 0x2B/255, green: 0x2F/255, blue: 0x4B/255), lineWidth: 3) // #2F2F4B
             )
         }
     }
@@ -481,12 +465,14 @@ struct ContentView: View {
         VStack {
             ExerciseView(streakManager: streakManager)
             InsightsSection(streakManager: streakManager)
+            ActionButtonView(streakManager: streakManager) // ← pass it here
         }
         .onAppear {
             streakManager.resetIfMissed()
         }
     }
 }
+
 
 struct BottomSheetView: View {
     let items = ["necklace", "redTie", "pinkTie"]
