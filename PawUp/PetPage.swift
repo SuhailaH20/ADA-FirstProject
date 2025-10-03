@@ -498,9 +498,12 @@ struct BottomSheetView: View {
                                 imageName: item,
                                 isSelected: selectedAccessory == item
                             ) {
-                                // Save the selected accessory
-                                selectedAccessory = item
-                                print("\(item) tapped!")
+                                // Toggle accessory: if already selected, remove it
+                                if selectedAccessory == item {
+                                    selectedAccessory = ""
+                                } else {
+                                    selectedAccessory = item
+                                }
                             }
                         }
                     }
