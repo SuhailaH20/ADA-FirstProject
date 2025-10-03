@@ -340,6 +340,7 @@ struct CustomProgressBar: View {
 struct ExerciseView: View {
     @State private var isChecked: Bool = false
     @ObservedObject var streakManager: StreakManager
+    @State private var isButtonDisabled = false
     @AppStorage("coins") private var coins: Int = 0 //total of coins
     @AppStorage("lastCheckInDate") private var lastCheckInDate: String = "" //
     
@@ -373,6 +374,13 @@ struct ExerciseView: View {
                Button(action: {
                    streakManager.resetIfMissed()  // Reset streak if missed before checking in
                    isChecked.toggle()
+                   isButtonDisabled = true
+                   streakManager.checkInToday()
+                   // Reset after 1 minutes
+                   DispatchQueue.main.asyncAfter(deadline: .now() + 60) {
+                       isChecked = false
+                       isButtonDisabled = false
+                   }
                    
                    if isChecked {
                        streakManager.checkInToday()
@@ -391,6 +399,8 @@ struct ExerciseView: View {
                        .frame(width: 26, height: 26)
                        .foregroundColor(isChecked ? Color(red: 0xC7/255, green: 0xAA/255, blue: 0x82/255) : .white)
                }
+               .disabled(isButtonDisabled || isChecked)
+
 
              }
              .padding()
