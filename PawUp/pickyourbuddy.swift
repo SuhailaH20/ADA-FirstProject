@@ -28,11 +28,7 @@ struct pickyourbuddy: View {
     @AppStorage("selectedBuddy") private var selectedBuddyID: String = ""
 
     @State private var goSetUp = false
-    
-    var isFormValid: Bool {
-        return !petName.isEmpty && selectedBuddy != nil
-    }
-    
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -102,8 +98,6 @@ struct pickyourbuddy: View {
                             .frame(width: 350, height: 49)
                             .background(Color.brandNavy)
                             .cornerRadius(5)
-                            .background(isFormValid ? Color.brandNavy : Color.gray)
-                            .cornerRadius(5)
                     }
                     .disabled(petName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || selectedBuddyID.isEmpty)
                     .opacity((petName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || selectedBuddyID.isEmpty) ? 0.6 : 1)
@@ -113,11 +107,8 @@ struct pickyourbuddy: View {
             }
             .navigationDestination(isPresented: $goSetUp) {
                 SetUp()
-                    .navigationBarBackButtonHidden(true)
-                }
             }
         }
-        
     }
 }
 

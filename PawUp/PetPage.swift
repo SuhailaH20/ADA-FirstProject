@@ -56,12 +56,14 @@ struct PetPage: View {
 }
 
 struct coinsView: View {
+    @AppStorage("coins") private var coins: Int = 0
+    
     var body: some View{
         ZStack{
             Image("coins")
                 .resizable()
                 .frame(width: 84, height: 40)
-            Text("3")
+            Text("\(coins)")
                 .font(.custom("GNF", size: 20))
                 .padding(.leading, 23.0)
                 
@@ -334,6 +336,7 @@ struct CustomProgressBar: View {
 struct ExerciseView: View {
     @State private var isChecked: Bool = false
     @ObservedObject var streakManager: StreakManager
+    @AppStorage("coins") private var coins: Int = 0 //total of coins
     
        var body: some View {
            HStack {
@@ -367,6 +370,7 @@ struct ExerciseView: View {
                    isChecked.toggle()
                    if isChecked {
                        streakManager.checkInToday()
+                       coins += 1
                    }
                }) {
                    Image(systemName: isChecked ? "checkmark.square.fill" : "square")
@@ -526,44 +530,44 @@ struct BottomSheetView: View {
             .padding()
         }
     }
-    
-    struct TrophyTile: View {
-        var imageName: String
-        var isSelected: Bool = false
-        var onTap: () -> Void = {}
         
-        var body: some View {
-            Button(action: { onTap() }) {
-                VStack(spacing: 8) {
-                    Image(imageName)
-                        .resizable()
-                        .interpolation(.none)
-                        .scaledToFit()
-                        .frame(height: 60)
-                    
-                    ZStack {
-                        Image("coins")
+        struct TrophyTile: View {
+            var imageName: String
+            var isSelected: Bool = false
+            var onTap: () -> Void = {}
+            
+            var body: some View {
+                Button(action: { onTap() }) {
+                    VStack(spacing: 8) {
+                        Image(imageName)
                             .resizable()
-                            .frame(width: 60, height: 24)
-                        Text("20")
-                            .font(.custom("GNF", size: 16))
-                            .foregroundColor(.black)
-                            .offset(x: 4)
+                            .interpolation(.none)
+                            .scaledToFit()
+                            .frame(height: 60)
+                        
+                        ZStack {
+                            Image("coins")
+                                .resizable()
+                                .frame(width: 60, height: 24)
+                            Text("20")
+                                .font(.custom("GNF", size: 16))
+                                .foregroundColor(.black)
+                                .offset(x: 4)
+                        }
                     }
+                    .padding(8)
+                    .frame(maxWidth: .infinity)
+                    .background(Color(red: 237/255, green: 225/255, blue: 198/255))
+                    .cornerRadius(8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 3)
+                    )
                 }
-                .padding(8)
-                .frame(maxWidth: .infinity)
-                .background(Color(red: 237/255, green: 225/255, blue: 198/255))
-                .cornerRadius(8)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 3)
-                )
+                .buttonStyle(PlainButtonStyle())
             }
-            .buttonStyle(PlainButtonStyle())
         }
     }
-}
 
 #Preview {
     PetPage()
