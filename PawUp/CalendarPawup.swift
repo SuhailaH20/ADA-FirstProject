@@ -4,7 +4,6 @@
 //
 //  Created by dana on 08/04/1447 AH.
 //
-
 import Foundation
 import SwiftUI
 
@@ -49,7 +48,7 @@ struct DayCell: View {
                         .frame(width: 28, height: 28)
 
                 case .empty:
-                    Image("Star")
+                    Image("Star 1")
                         .resizable()
                         .interpolation(.none)
                         .scaledToFit()
@@ -63,46 +62,49 @@ struct DayCell: View {
     }
 }
 
-struct CalendarPawup: View {
+struct CalendarView: View {
     private let pageBG = Color(red: 0.98, green: 0.96, blue: 0.92)
     private let weekdays = ["S","M","T","W","T","F","S"]
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 14), count: 7)
 
-    @State private var didWorkoutToday: Bool = true
-
-    private let grid: [[DayCell.Content]] = [
-        [.empty, .image("Star"), .image("Star"), .image("brokenheart"), .image("Star"), .number(5), .number(6)],
-        [.image("Star"), .image("Star"), .image("brokenheart"), .image("Star"), .image("brokenheart"), .number(12), .number(13)],
-        [.image("Star"), .empty, .image("brokenheart"), .empty, .image("brokenheart"), .number(19), .number(20)],
-        [.image("Star"), .image("Star"), .image("brokenheart"), .image("Star"), .image("brokenheart"), .number(26), .number(27)],
-        [.image("Star"), .image("brokenheart"), .image("Star"), .none, .none, .none, .none]
-    ]
+    // Visible month/year (starts at current date)
+    @State private var visibleMonth: Date = Date()
 
     var body: some View {
         ZStack {
             pageBG.ignoresSafeArea()
 
             VStack(spacing: 30) {
-                HStack(spacing: 10) {
-                    Spacer()
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 23, weight: .bold))
-                    Text("September")
-                        .font(.gnf(36))
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 23, weight: .bold))
-                    Spacer()
-                }
-                .padding(.horizontal, 63)
+                // Header bar + arrows
+                HStack(spacing: 16) {
+                    Button {
+                        changeMonth(by: -1)
+                    } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 20, weight: .bold))
+                    }
 
-            
-                HStack(spacing: 12) {
-                    Button("Workout completed today") { didWorkoutToday = true }
-                    Button("Skip workout today") { didWorkoutToday = false }
-                }
-                .font(.gnf(12))
-                .padding(.horizontal, 63)
+                    Text(monthTitle(for: visibleMonth))
+                        .font(.gnf(28))
 
+                    Button {
+                        changeMonth(by: 1)
+                    } label: {
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 20, weight: .bold))
+                    }
+
+                    Spacer()
+
+                    // Jump back to current month
+                    Button("Today") {
+                        visibleMonth = Date()
+                    }
+                    .font(.gnf(14))
+                }
+                .padding(.horizontal, 20)
+
+                // Weekday titles
                 HStack {
                     ForEach(weekdays, id: \.self) { d in
                         Text(d)
@@ -110,59 +112,100 @@ struct CalendarPawup: View {
                             .frame(maxWidth: .infinity)
                     }
                 }
-                .padding(.horizontal, 17)
+                .padding(.horizontal, 12)
 
-            
+                // Day grid (reads per-day state from storage)
                 LazyVGrid(columns: columns, spacing: 14) {
-                    ForEach(0..<grid.count, id: \.self) { r in
-                        ForEach(0..<7, id: \.self) { c in
-                            let base = grid[r][c]
-
-                            if let day = dayNumberAt(row: r, col: c),
-                               isToday(day: day) {
-                                
-                                DayCell(content: .image(didWorkoutToday ? "Star" : "brokenheart"))
-                            } else {
-                
-                                if base == .none {
-                                    EmptyView()
+                    let model = monthModel(for: visibleMonth)
+                    ForEach(0..<model.totalCells, id: \.self) { index in
+                        if let day = model.dayNumber(at: index) {
+                            if let dateForCell = dateFor(visibleMonth, day: day) {
+                                if let did = WorkoutStore.get(on: dateForCell) {
+                                    // Stored explicitly → show star or broken heart
+                                    DayCell(content: .image(did ? "Star" : "brokenheart"))
                                 } else {
-                                    DayCell(content: base)
+                                    // Not stored:
+                                    // - Past day → treat as missed (broken heart)
+                                    // - Today or future → just show the number
+                                    if isPast(dateForCell) {
+                                        DayCell(content: .image("brokenheart"))
+                                    } else {
+                                        DayCell(content: .number(day))
+                                    }
                                 }
+                            } else {
+                                DayCell(content: .number(day))
                             }
+                        } else {
+                            DayCell(content: .none)
                         }
                     }
                 }
-                .padding(.horizontal, 16)
+                .padding(.horizontal, 12)
             }
-            .frame(maxWidth: .infinity)
-            .frame(maxHeight: .infinity, alignment: .center)
-            .offset(y: -24)
+            // Center content vertically
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         }
     }
 
+    // MARK: - Month navigation & formatting
+    private func changeMonth(by value: Int) {
+        if let newDate = Calendar.current.date(byAdding: .month, value: value, to: visibleMonth) {
+            visibleMonth = newDate
+        }
+    }
 
-    private func dayNumberAt(row: Int, col: Int) -> Int? {
+    private func monthTitle(for date: Date) -> String {
+        let fmt = DateFormatter()
+        fmt.locale = Locale(identifier: "en_US_POSIX")
+        fmt.dateFormat = "LLLL yyyy"
+        return fmt.string(from: date)
+    }
+
+    // MARK: - Helpers
+    private func dateFor(_ monthDate: Date, day: Int) -> Date? {
+        var comps = Calendar.current.dateComponents([.year, .month], from: monthDate)
+        comps.day = day
+        return Calendar.current.date(from: comps)
+    }
+
+    private func isPast(_ date: Date) -> Bool {
         let cal = Calendar.current
-        let today = Date()
-        guard let firstOfMonth = cal.date(from: cal.dateComponents([.year, .month], from: today)),
-              let daysRange = cal.range(of: .day, in: .month, for: today) else { return nil }
+        let today = cal.startOfDay(for: Date())
+        let target = cal.startOfDay(for: date)
+        return target < today
+    }
 
+    private func monthModel(for date: Date) -> MonthGridModel {
+        let cal = Calendar.current
+        guard
+            let firstOfMonth = cal.date(from: cal.dateComponents([.year, .month], from: date)),
+            let daysRange = cal.range(of: .day, in: .month, for: date)
+        else {
+            return MonthGridModel(leadingEmpty: 0, daysInMonth: 30) // fallback
+        }
         let weekdayOfFirst = cal.component(.weekday, from: firstOfMonth)
-        let leadingEmpty = weekdayOfFirst - 1
-        let index = row * 7 + col
-        let dayNumber = index - leadingEmpty + 1
-        return daysRange.contains(dayNumber) ? dayNumber : nil
+        let leading = weekdayOfFirst - 1
+        return MonthGridModel(leadingEmpty: leading, daysInMonth: daysRange.count)
     }
 
-   
-    private func isToday(day: Int) -> Bool {
-        let cal = Calendar.current
-        let comps = cal.dateComponents([.day], from: Date())
-        return comps.day == day
+    struct MonthGridModel {
+        let leadingEmpty: Int
+        let daysInMonth: Int
+
+        var totalCells: Int {
+            let total = leadingEmpty + daysInMonth
+            let rows = Int(ceil(Double(total) / 7.0))
+            return rows * 7
+        }
+
+        func dayNumber(at index: Int) -> Int? {
+            let day = index - leadingEmpty + 1
+            return (1...daysInMonth).contains(day) ? day : nil
+        }
     }
 }
-
 #Preview {
-    CalendarPawup()
+    CalendarView()
 }
+
