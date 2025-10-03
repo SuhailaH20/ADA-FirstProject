@@ -82,7 +82,7 @@ struct BuddyCardView: View {
             Image("petCard")
                 .resizable()
                 .clipped()
-
+            
             // Content over the image
             HStack(alignment: .center) {
                 Text("Your buddy’s tail is wagging—ready to move?")
@@ -91,9 +91,9 @@ struct BuddyCardView: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.bottom)
                     .layoutPriority(1)
-
+                
                 Spacer(minLength: 20)
-
+                
                 ZStack {
                     // Pet base
                     Image("\(selectedBuddyID)_image")
@@ -107,7 +107,8 @@ struct BuddyCardView: View {
                             .resizable()
                             .aspectRatio(contentMode: .fit)
                             .frame(width: 62, height: 62)
-                            .offset(accessoryOffsets[selectedAccessory] ?? .zero)
+                            .offset(accessoryOffsets[selectedBuddyID]?[selectedAccessory] ?? .zero)
+                        
                     }
                 }
             }
@@ -116,12 +117,19 @@ struct BuddyCardView: View {
         .fixedSize(horizontal: false, vertical: true) // shrink-wrap
     }
     
-    private let accessoryOffsets: [String: CGSize] = [
+    private let accessoryOffsets: [String: [String: CGSize]] = [
+        "dog":[
             "necklace": CGSize(width: -8, height:-2),
             "redTie": CGSize(width: -8, height: 4),
             "pinkTie": CGSize(width: -8, height: -42)
             // Add more accessories here and tweak their x/y individually
+        ],
+        "cat": [
+            "necklace": CGSize(width: -15, height: 4),
+            "redTie": CGSize(width: -16, height: 3),
+            "pinkTie": CGSize(width: -15, height: -40)
         ]
+]
 }
 
 
