@@ -439,7 +439,7 @@ struct BottomSheetView: View {
                     LazyVGrid(columns: columns, spacing: 16) {
                         ForEach(items.indices, id: \.self) { index in
                             TrophyTile(imageName: items[index]) {
-                                print("\(items[index]) tapped!")
+                                
                             }
                         }
                     }

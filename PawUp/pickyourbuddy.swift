@@ -28,7 +28,11 @@ struct pickyourbuddy: View {
 
     @State private var selectedBuddy: Buddy? = nil
     @State private var goSetUp = false
-
+    
+    var isFormValid: Bool {
+        return !petName.isEmpty && selectedBuddy != nil
+    }
+    
     var body: some View {
         NavigationStack {
             ZStack {
@@ -89,7 +93,7 @@ struct pickyourbuddy: View {
                     Spacer()
                     
                     Button(action: {
-                        goSetUp=true
+                        goSetUp = true
                     }) {
                         Text("Continue")
                             .font(.custom("GNF", size: 21))
@@ -97,16 +101,19 @@ struct pickyourbuddy: View {
                             .frame(width: 350, height: 49)
                             .background(Color.brandNavy)
                             .cornerRadius(5)
+                            .background(isFormValid ? Color.brandNavy : Color.gray)
+                            .cornerRadius(5)
                     }
-                    
+                    .disabled(!isFormValid)
                 }
                 .padding()
                 
             }
             .navigationDestination(isPresented: $goSetUp) {
                 SetUp()
+                    .navigationBarBackButtonHidden(true)
+                }
             }
-        }
         }
         
     }
