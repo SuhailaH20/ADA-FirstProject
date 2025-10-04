@@ -24,33 +24,35 @@ struct PetPage: View {
     @StateObject private var streakManager = StreakManager()
 
     var body: some View {
-        ZStack(alignment: .topLeading) {
-
-            // Background color
-            Color(red: 0xFD/255, green: 0xF8/255, blue: 0xEF/255)
-                .ignoresSafeArea()
-
-            // Main content
-            VStack(alignment: .leading) {
-                // Align coinsView to the leading edge
-                coinsView()
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.leading, 20)
-
-                // Main card and action btn
-                ZStack(alignment: .bottom) {
-                    BuddyCardView()
-                    ActionButtonView(streakManager: streakManager)
-                        .offset(y: 40)
-                }
-
-                ExerciseView(streakManager: streakManager)
-                    .padding(.top, 60)
-
-                InsightsSection(streakManager: streakManager)
+        NavigationStack{
+            ZStack(alignment: .topLeading) {
                 
-                CalendarWeekView()
-
+                // Background color
+                Color(red: 0xFD/255, green: 0xF8/255, blue: 0xEF/255)
+                    .ignoresSafeArea()
+                
+                // Main content
+                VStack(alignment: .leading) {
+                    // Align coinsView to the leading edge
+                    coinsView()
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.leading, 20)
+                    
+                    // Main card and action btn
+                    ZStack(alignment: .bottom) {
+                        BuddyCardView()
+                        ActionButtonView(streakManager: streakManager)
+                            .offset(y: 40)
+                    }
+                    
+                    ExerciseView(streakManager: streakManager)
+                        .padding(.top, 60)
+                    
+                    InsightsSection(streakManager: streakManager)
+                    
+                    CalendarWeekView()
+                    
+                }
             }
         }
     }
@@ -522,39 +524,67 @@ struct CalendarWeekView: View {
     private let calendar = Calendar.current
     private let today = Date()
 
+    // Weekday letters for display: ["S", "M", ..., "S"]
+    private let weekdaySymbols = Calendar.current.shortWeekdaySymbols
+
     private var weekDates: [Date] {
+        // Start from Sunday of current week
         let startOfWeek = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: today))!
         return (0..<7).compactMap { calendar.date(byAdding: .day, value: $0, to: startOfWeek) }
     }
 
     var body: some View {
         VStack(alignment: .leading){
-            Text("Your Calendar")
-                .font(.custom("GNF", size: 24))
-                .fontWeight(.bold)
-                .padding(.horizontal, 20)
-                .padding(.vertical, 20)
-            HStack(spacing: 12) {
-                ForEach(weekDates, id: \.self) { date in
-                    let day = calendar.component(.day, from: date)
+            NavigationLink(destination: CalendarPawup()) {
+                HStack (spacing: -15){
+                    Text("Your Calendar")
+                        .font(.custom("GNF", size: 24))
+                        .fontWeight(.bold)
+                        .foregroundColor(.black)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 15)
                     
-                    if let did = WorkoutStore.get(on: date) {
-                        DayCell(content: .image(did ? "Star" : "brokenheart"))
-                    } else if isPast(date) {
-                        DayCell(content: .image("brokenheart"))
-                    } else {
-                        DayCell(content: .number(day))
-                    }
+                    Image("paly")
+                        .resizable()
+                        .frame(width: 28, height: 28)
+                        
                 }
             }
-            .padding(.horizontal, 12)
+            HStack(spacing: 12) {
+                ForEach(Array(weekDates.enumerated()), id: \.element) { index, date in
+                    VStack(spacing: 6) {
+                        // Weekday letter above each cell
+                        Text(weekdayLetter(for: date))
+                            .font(.gnf(16))
+                            .foregroundColor(.black)
+                        
+                        // Day content
+                        let day = calendar.component(.day, from: date)
+                        
+                        if let did = WorkoutStore.get(on: date) {
+                            DayCell(content: .image(did ? "Star" : "brokenheart"))
+                        } else if isPast(date) {
+                            DayCell(content: .image("brokenheart"))
+                        } else {
+                            DayCell(content: .number(day))
+                        }
+                    }
+                }
+            } .padding(.horizontal, 12)
         }
+       
     }
+
     private func isPast(_ date: Date) -> Bool {
-        let cal = Calendar.current
-        let today = cal.startOfDay(for: Date())
-        let target = cal.startOfDay(for: date)
+        let today = calendar.startOfDay(for: Date())
+        let target = calendar.startOfDay(for: date)
         return target < today
+    }
+
+    private func weekdayLetter(for date: Date) -> String {
+        let index = calendar.component(.weekday, from: date) - 1
+        // Make sure it's in bounds
+        return (0..<7).contains(index) ? String(weekdaySymbols[index].prefix(1)) : ""
     }
 }
 
