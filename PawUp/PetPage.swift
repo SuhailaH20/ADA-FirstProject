@@ -48,6 +48,9 @@ struct PetPage: View {
                     .padding(.top, 60)
 
                 InsightsSection(streakManager: streakManager)
+                
+                CalendarWeekView()
+
             }
         }
     }
@@ -514,6 +517,47 @@ struct BottomSheetView: View {
         }
     }
 }
+
+struct CalendarWeekView: View {
+    private let calendar = Calendar.current
+    private let today = Date()
+
+    private var weekDates: [Date] {
+        let startOfWeek = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: today))!
+        return (0..<7).compactMap { calendar.date(byAdding: .day, value: $0, to: startOfWeek) }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading){
+            Text("Your Calendar")
+                .font(.custom("GNF", size: 24))
+                .fontWeight(.bold)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 20)
+            HStack(spacing: 12) {
+                ForEach(weekDates, id: \.self) { date in
+                    let day = calendar.component(.day, from: date)
+                    
+                    if let did = WorkoutStore.get(on: date) {
+                        DayCell(content: .image(did ? "Star" : "brokenheart"))
+                    } else if isPast(date) {
+                        DayCell(content: .image("brokenheart"))
+                    } else {
+                        DayCell(content: .number(day))
+                    }
+                }
+            }
+            .padding(.horizontal, 12)
+        }
+    }
+    private func isPast(_ date: Date) -> Bool {
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: Date())
+        let target = cal.startOfDay(for: date)
+        return target < today
+    }
+}
+
 #Preview {
     PetPage()
 }
