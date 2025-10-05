@@ -4,7 +4,6 @@
 //
 //  Created by dana on 08/04/1447 AH.
 //
-
 import Foundation
 import SwiftUI
 
@@ -80,6 +79,9 @@ struct CalendarPawup: View {
     // Currently visible month
     @State private var visibleMonth: Date = Date()
 
+    // Persisted start date set when user tapped Continue in SetUp
+    @AppStorage("calendarStartDate") private var calendarStartDate: String = "" // ISO "yyyy-MM-dd"
+
     // Lock calculations to Gregorian, Sunday-first, and stable timezone
     private var cal: Calendar {
         var c = Calendar(identifier: .gregorian)
@@ -87,6 +89,24 @@ struct CalendarPawup: View {
         c.firstWeekday = 1 // Sunday
         c.timeZone = TimeZone(secondsFromGMT: 0)! // keep weekday stable
         return c
+    }
+
+    // Parse ISO "yyyy-MM-dd" string to Date in UTC; return nil if not set
+    private func parseStartDate(_ s: String) -> Date? {
+        guard !s.isEmpty else { return nil }
+        let fmt = DateFormatter()
+        fmt.calendar = cal
+        fmt.locale = Locale(identifier: "en_US_POSIX")
+        fmt.timeZone = cal.timeZone
+        fmt.dateFormat = "yyyy-MM-dd"
+        return fmt.date(from: s)
+    }
+
+    // Returns true if the given date is before the stored start date.
+    // If no start date is stored yet, treat as "before" to suppress icons everywhere.
+    private func isBeforeStartDate(_ date: Date) -> Bool {
+        guard let start = parseStartDate(calendarStartDate) else { return true }
+        return cal.startOfDay(for: date) < cal.startOfDay(for: start)
     }
 
     var body: some View {
@@ -188,7 +208,7 @@ struct CalendarPawup: View {
 
     /// Build 42 cells (6 rows x 7 columns)
     /// - Leading from previous month as gray numbers
-    /// - Current month as black numbers or images based on your logic
+    /// - Current month: show star/broken-heart ONLY on/after the stored start date; older days show plain numbers
     /// - Trailing from next month as gray numbers
     private func buildCells(for monthDate: Date) -> [AnyView] {
         let first = firstOfMonth(monthDate)
@@ -217,17 +237,22 @@ struct CalendarPawup: View {
             }
         }
 
-        // 2) Current month days (star/heart or black number)
+        // 2) Current month days
         for d in 1...dim {
             let cellDate = dateFor(monthDate, day: d)
 
+            // NEW RULE: suppress icons for any date earlier than the stored start date
+            if isBeforeStartDate(cellDate) {
+                views.append(AnyView(DayCell(content: .number(d))))
+                continue
+            }
+
+            // From the stored start date onward: keep your original logic
             if let did = WorkoutStore.get(on: cellDate) {
-                
                 views.append(AnyView(
                     DayCell(content: .image(did ? "Star" : "brokenheart"))
                 ))
             } else {
-                // Without data: past -> heart image, otherwise black number
                 if isPast(cellDate) {
                     views.append(AnyView(DayCell(content: .image("brokenheart"))))
                 } else {
