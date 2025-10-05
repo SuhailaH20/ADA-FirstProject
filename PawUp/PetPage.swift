@@ -133,6 +133,7 @@ struct BuddyCardView: View {
 
 //  Main View that holds all the Action Buttons
 struct ActionButtonView: View {
+    @AppStorage("lastBreakDayUsed") private var lastBreakDayUsed: String = ""
     @ObservedObject var streakManager: StreakManager
     @AppStorage("breakDayCount") private var maxBreakDays: Int = 0
     
@@ -142,6 +143,7 @@ struct ActionButtonView: View {
     @State private var showTrophySheet: Bool = false
 
     var body: some View {
+        
         HStack(spacing: 40) {
             TrophyButton {
                 showTrophySheet = true
@@ -149,6 +151,7 @@ struct ActionButtonView: View {
 
             // Use streakManager.streakDays for progress
             ActionButton(
+                
                 isSelected: Binding(
                     get: { selectedButton == "streak" },
                     set: { selectedButton = $0 ? "streak" : nil }
@@ -177,23 +180,34 @@ struct ActionButtonView: View {
                 }
             )
         }
-        .alert("Break day", isPresented: $showBreakdayConfirmation) {
-            if breakDayProgress < CGFloat(maxBreakDays) {
+        .alert("Use a break day?", isPresented: $showBreakdayConfirmation) {
+            let today = formattedToday() // "yyyy-MM-dd"
+            
+            if breakDayProgress >= CGFloat(maxBreakDays) {
+                // Already used all breakdays
+                Button("OK", role: .cancel) {}
+            } else if lastBreakDayUsed == today {
+                // Already used a breakday today
+                Button("OK", role: .cancel) {}
+            } else {
                 Button("Yes", role: .destructive) {
                     breakDayProgress += 1
+                    lastBreakDayUsed = today // mark that breakday was used today
                 }
                 Button("Cancel", role: .cancel) {}
-            } else {
-                // User already used them all
-                Button("OK", role: .cancel) {}
             }
         } message: {
+            let today = formattedToday()
+            
             if breakDayProgress >= CGFloat(maxBreakDays) {
                 Text("You’ve already used all your breakdays!")
+            } else if lastBreakDayUsed == today {
+                Text("You’ve already used a breakday today!")
             } else {
                 Text("Do you want to use one of your breakdays?")
             }
         }
+
 
         .sheet(isPresented: $showTrophySheet) {
             BottomSheetView()
@@ -202,6 +216,7 @@ struct ActionButtonView: View {
 }
 
 struct ActionButton: View {
+    
     @Binding var isSelected: Bool
     var imageName: String
     @Binding var progress: CGFloat
