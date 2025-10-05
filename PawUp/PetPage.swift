@@ -177,12 +177,24 @@ struct ActionButtonView: View {
                 }
             )
         }
-        .alert("Use a break day?", isPresented: $showBreakdayConfirmation) {
-            Button("Yes", role: .destructive) {
-                breakDayProgress += 1
+        .alert("Break day", isPresented: $showBreakdayConfirmation) {
+            if breakDayProgress < CGFloat(maxBreakDays) {
+                Button("Yes", role: .destructive) {
+                    breakDayProgress += 1
+                }
+                Button("Cancel", role: .cancel) {}
+            } else {
+                // User already used them all
+                Button("OK", role: .cancel) {}
             }
-            Button("Cancel", role: .cancel) {}
+        } message: {
+            if breakDayProgress >= CGFloat(maxBreakDays) {
+                Text("You’ve already used all your breakdays!")
+            } else {
+                Text("Do you want to use one of your breakdays?")
+            }
         }
+
         .sheet(isPresented: $showTrophySheet) {
             BottomSheetView()
         }
