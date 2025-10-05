@@ -134,7 +134,8 @@ struct BuddyCardView: View {
 //  Main View that holds all the Action Buttons
 struct ActionButtonView: View {
     @ObservedObject var streakManager: StreakManager
-
+    @AppStorage("breakDayCount") private var maxBreakDays: Int = 0
+    
     @State private var selectedButton: String? = nil
     @State private var breakDayProgress: CGFloat = 0.0
     @State private var showBreakdayConfirmation: Bool = false
@@ -154,6 +155,7 @@ struct ActionButtonView: View {
                 ),
                 imageName: "Streak",
                 progress: .constant(CGFloat(min(streakManager.streakDays, 5))), // max 5
+                maxValue: 5,
                 onSecondTap: {}
             )
 
@@ -169,6 +171,7 @@ struct ActionButtonView: View {
                 ),
                 imageName: "breakday",
                 progress: $breakDayProgress,
+                maxValue: maxBreakDays,
                 onSecondTap: {
                     showBreakdayConfirmation = true
                 }
@@ -190,6 +193,7 @@ struct ActionButton: View {
     @Binding var isSelected: Bool
     var imageName: String
     @Binding var progress: CGFloat
+    var maxValue: Int
     var onSecondTap: () -> Void
 
     var body: some View {
@@ -215,9 +219,9 @@ struct ActionButton: View {
 
                     if isSelected {
                         ZStack {
-                            CustomProgressBar(progress: progress / 5.0)
+                            CustomProgressBar(progress: progress / CGFloat(maxValue))
                                 .frame(width: 50, height: 20)
-                            Text("\(Int(progress))/5")
+                            Text("\(Int(progress))/\(maxValue)")
                                 .font(.custom("GNF", size: 14).weight(.bold))
                                 .foregroundColor(Color(red: 0x2F/255, green: 0x2F/255, blue: 0x4B/255))
                         }
