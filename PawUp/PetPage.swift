@@ -469,21 +469,34 @@ struct Item {
 }
 
 struct BottomSheetView: View {
-    //  items name and a price
     let items: [Item] = [
-            Item (name: "necklace", price: 10),
-            Item (name: "redTie", price: 15),
-            Item (name: "pinkTie", price: 20)
+        Item(name: "necklace", price: 10),
+        Item(name: "redTie", price: 15),
+        Item(name: "pinkTie", price: 20)
     ]
     let columns = [
         GridItem(.flexible()),
         GridItem(.flexible())
     ]
     
-    
-    // Shared storage for selected accessory
+    // Selected equipped accessory
     @AppStorage("selectedAccessory") private var selectedAccessory: String = ""
+    // User coins
     @AppStorage("coins") private var coins: Int = 0
+    
+    // Store owned accessories as a comma-separated string in AppStorage (you can also use JSON)
+    @AppStorage("ownedAccessories") private var ownedAccessoriesString: String = "necklace" // necklace is free, so start with it
+    
+    // Computed property to get owned accessories as a Set for easier lookup
+    private var ownedAccessories: Set<String> {
+        get {
+            Set(ownedAccessoriesString.split(separator: ",").map { String($0) })
+        }
+        set {
+            ownedAccessoriesString = newValue.joined(separator: ",")
+        }
+    }
+    
     @State private var showAlert = false
     @State private var alertMessage = ""
     
@@ -503,42 +516,43 @@ struct BottomSheetView: View {
                         .scaledToFit()
                         .frame(width: 60, height: 60)
                 }
+                Text("Every workout earns you coins—spend them on special accessories to celebrate your progress!") .font(.custom("GNF", size: 20)) .foregroundColor(Color(red: 208/255, green: 127/255, blue: 116/255)) .multilineTextAlignment(.center) .padding(.horizontal)
                 
-                Text("Every workout earns you coins—spend them on special accessories to celebrate your progress!")
-                    .font(.custom("GNF", size: 20))
-                    .foregroundColor(Color(red: 208/255, green: 127/255, blue: 116/255))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
-                
-                // Trophy grid
-                VStack {
-                    LazyVGrid(columns: columns, spacing: 16) {
-                        ForEach(items, id: \.name) { item in
-                            TrophyTile(
-                                imageName: item.name,
-                                price: item.price,
-                                isSelected: selectedAccessory == item.name
-                            ) {
-                                // Toggle accessory: if already selected, remove it
+                LazyVGrid(columns: columns, spacing: 16) {
+                    ForEach(items, id: \.name) { item in
+                        TrophyTile(
+                            imageName: item.name,
+                            price: item.price,
+                            isSelected: selectedAccessory == item.name
+                        ) {
+                            if ownedAccessories.contains(item.name) {
+                                // If already owned, just toggle equip/unequip without paying
                                 if selectedAccessory == item.name {
-                                    selectedAccessory = ""
-                                } else if coins >= item.price {
-                                    // Enough coins → buy and equip
+                                    selectedAccessory = "" // Unequip
+                                } else {
+                                    selectedAccessory = item.name // Equip
+                                }
+                            } else {
+                                // Not owned, try to buy if enough coins
+                                if coins >= item.price {
                                     coins -= item.price
                                     selectedAccessory = item.name
+                                    var newOwned = ownedAccessories
+                                    newOwned.insert(item.name)
+                                    ownedAccessoriesString = newOwned.joined(separator: ",")
+
+                                    
                                     alertMessage = "You bought the \(item.name)!"
                                     showAlert = true
-                                }
-                                else {
-                                    // Not enough coins
+                                } else {
                                     alertMessage = "Workout more to earn enough coins!"
                                     showAlert = true
                                 }
                             }
                         }
                     }
-                    .padding()
                 }
+                .padding()
                 .background(Color.white)
                 .cornerRadius(16)
                 .padding(.horizontal)
@@ -548,12 +562,10 @@ struct BottomSheetView: View {
             .padding()
         }
         .alert(alertMessage, isPresented: $showAlert) {
-            Button ("OK"
-                    , role: .cancel) {
-            }
+            Button("OK", role: .cancel) {}
         }
     }
-        
+}
         
     struct TrophyTile: View {
         var imageName: String
@@ -591,9 +603,7 @@ struct BottomSheetView: View {
                 }
                 .buttonStyle(PlainButtonStyle())
             }
-        }
-    }
-    
+}
     struct CalendarWeekView: View {
         private let calendar = Calendar.current
         private let today = Date()
