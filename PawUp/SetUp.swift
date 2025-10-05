@@ -6,6 +6,7 @@ struct SetUp: View {
     @AppStorage("name") var name: String = ""
     @AppStorage("selectedGoal") var storedGoal: String = ""
     @AppStorage("breakDayCount") var storedBreakDays: Int = 0
+    @AppStorage("calendarStartDate") var calendarStartDate: String = "" // ISO "yyyy-MM-dd" start date
     
     // Local state for UI
     @State private var selectedGoal: String? = nil
@@ -31,7 +32,6 @@ struct SetUp: View {
     var isFormValid: Bool {
         return !name.isEmpty && !(selectedGoal ?? storedGoal).isEmpty
     }
-    
         
     var body: some View {
         ZStack {
@@ -105,6 +105,16 @@ struct SetUp: View {
                 Button(action: {
                     storedGoal = selectedGoal ?? storedGoal
                     storedBreakDays = breakDayCount
+                    
+                    // MARK: Start icons from the moment user presses Continue
+                    // Persist "calendarStartDate" as ISO "yyyy-MM-dd" in a stable timezone (UTC)
+                    let fmt = DateFormatter()
+                    fmt.calendar = Calendar(identifier: .gregorian)
+                    fmt.locale = Locale(identifier: "en_US_POSIX")
+                    fmt.timeZone = TimeZone(secondsFromGMT: 0)
+                    fmt.dateFormat = "yyyy-MM-dd"
+                    calendarStartDate = fmt.string(from: Date())
+                    
                     goNotification = true
                 }) {
                     Text("Continue")
