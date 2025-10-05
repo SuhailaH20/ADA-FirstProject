@@ -75,7 +75,7 @@ struct coinsView: View {
 
 struct BuddyCardView: View {
     @AppStorage("selectedBuddy") private var selectedBuddyID: String = ""
-    @AppStorage("selectedAccessory") private var selectedAccessory: String = "" // add this
+    @AppStorage("selectedAccessory") private var selectedAccessory: String = ""
 
     var body: some View {
         ZStack(alignment: .leading) {
