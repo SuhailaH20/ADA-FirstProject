@@ -421,21 +421,35 @@ struct ContentView: View {
     }
 }
 
+struct Item {
+    var name: String
+    var price: Int
+}
+
 struct BottomSheetView: View {
-    let items = ["necklace", "redTie", "pinkTie"]
+    //  items name and a price
+    let items: [Item] = [
+            Item (name: "necklace", price: 10),
+            Item (name: "redTie", price: 15),
+            Item (name: "pinkTie", price: 20)
+    ]
     let columns = [
         GridItem(.flexible()),
         GridItem(.flexible())
     ]
-
+    
+    
     // Shared storage for selected accessory
     @AppStorage("selectedAccessory") private var selectedAccessory: String = ""
-
+    @AppStorage("coins") private var coins: Int = 0
+    @State private var showAlert = false
+    @State private var alertMessage = ""
+    
     var body: some View {
         ZStack {
             Color(red: 237/255, green: 225/255, blue: 198/255)
                 .ignoresSafeArea()
-
+            
             VStack(spacing: 20) {
                 HStack {
                     Text("Trophies")
@@ -447,25 +461,36 @@ struct BottomSheetView: View {
                         .scaledToFit()
                         .frame(width: 60, height: 60)
                 }
-
+                
                 Text("Every workout earns you coins—spend them on special accessories to celebrate your progress!")
                     .font(.custom("GNF", size: 20))
                     .foregroundColor(Color(red: 208/255, green: 127/255, blue: 116/255))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
-
+                
+                // Trophy grid
                 VStack {
                     LazyVGrid(columns: columns, spacing: 16) {
-                        ForEach(items, id: \.self) { item in
+                        ForEach(items, id: \.name) { item in
                             TrophyTile(
-                                imageName: item,
-                                isSelected: selectedAccessory == item
+                                imageName: item.name,
+                                price: item.price,
+                                isSelected: selectedAccessory == item.name
                             ) {
                                 // Toggle accessory: if already selected, remove it
-                                if selectedAccessory == item {
+                                if selectedAccessory == item.name {
                                     selectedAccessory = ""
-                                } else {
-                                    selectedAccessory = item
+                                } else if coins >= item.price {
+                                    // Enough coins → buy and equip
+                                    coins -= item.price
+                                    selectedAccessory = item.name
+                                    alertMessage = "You bought the \(item.name)!"
+                                    showAlert = true
+                                }
+                                else {
+                                    // Not enough coins
+                                    alertMessage = "Workout more to earn enough coins!"
+                                    showAlert = true
                                 }
                             }
                         }
@@ -475,118 +500,126 @@ struct BottomSheetView: View {
                 .background(Color.white)
                 .cornerRadius(16)
                 .padding(.horizontal)
-
+                
                 Spacer()
             }
             .padding()
         }
+        .alert(alertMessage, isPresented: $showAlert) {
+            Button ("OK"
+                    , role: .cancel) {
+            }
+        }
     }
-
+        
+        
     struct TrophyTile: View {
         var imageName: String
+        var price: Int
         var isSelected: Bool = false
         var onTap: () -> Void = {}
-
-        var body: some View {
-            Button(action: { onTap() }) {
-                VStack(spacing: 8) {
-                    Image(imageName)
-                        .resizable()
-                        .interpolation(.none)
-                        .scaledToFit()
-                        .frame(height: 60)
-
-                    ZStack {
-                        Image("coins")
+            
+            var body: some View {
+                Button(action: { onTap() }) {
+                    VStack(spacing: 8) {
+                        Image(imageName)
                             .resizable()
-                            .frame(width: 60, height: 24)
-                        Text("20")
-                            .font(.custom("GNF", size: 16))
-                            .foregroundColor(.black)
-                            .offset(x: 4)
-                    }
-                }
-                .padding(8)
-                .frame(maxWidth: .infinity)
-                .background(Color(red: 237/255, green: 225/255, blue: 198/255))
-                .cornerRadius(8)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 3)
-                )
-            }
-            .buttonStyle(PlainButtonStyle())
-        }
-    }
-}
-
-struct CalendarWeekView: View {
-    private let calendar = Calendar.current
-    private let today = Date()
-
-    // Weekday letters for display: ["S", "M", ..., "S"]
-    private let weekdaySymbols = Calendar.current.shortWeekdaySymbols
-
-    private var weekDates: [Date] {
-        // Start from Sunday of current week
-        let startOfWeek = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: today))!
-        return (0..<7).compactMap { calendar.date(byAdding: .day, value: $0, to: startOfWeek) }
-    }
-
-    var body: some View {
-        VStack(alignment: .leading){
-            NavigationLink(destination: CalendarPawup()) {
-                HStack (spacing: -15){
-                    Text("Your Calendar")
-                        .font(.custom("GNF", size: 24))
-                        .fontWeight(.bold)
-                        .foregroundColor(.black)
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 15)
-                    
-                    Image("paly")
-                        .resizable()
-                        .frame(width: 28, height: 28)
+                            .interpolation(.none)
+                            .scaledToFit()
+                            .frame(height: 60)
                         
-                }
-            }
-            HStack(spacing: 12) {
-                ForEach(Array(weekDates.enumerated()), id: \.element) { index, date in
-                    VStack(spacing: 6) {
-                        // Weekday letter above each cell
-                        Text(weekdayLetter(for: date))
-                            .font(.gnf(16))
-                            .foregroundColor(.black)
-                        
-                        // Day content
-                        let day = calendar.component(.day, from: date)
-                        
-                        if let did = WorkoutStore.get(on: date) {
-                            DayCell(content: .image(did ? "Star" : "brokenheart"))
-                        } else if isPast(date) {
-                            DayCell(content: .image("brokenheart"))
-                        } else {
-                            DayCell(content: .number(day))
+                        ZStack {
+                            Image("coins")
+                                .resizable()
+                                .frame(width: 60, height: 24)
+                            Text("\(price)")
+                                .font(.custom("GNF", size: 16))
+                                .foregroundColor(.black)
+                                .offset(x: 4)
                         }
                     }
+                    .padding(8)
+                    .frame(maxWidth: .infinity)
+                    .background(Color(red: 237/255, green: 225/255, blue: 198/255))
+                    .cornerRadius(8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 3)
+                    )
                 }
-            } .padding(.horizontal, 12)
+                .buttonStyle(PlainButtonStyle())
+            }
         }
-       
+    }
+    
+    struct CalendarWeekView: View {
+        private let calendar = Calendar.current
+        private let today = Date()
+        
+        // Weekday letters for display: ["S", "M", ..., "S"]
+        private let weekdaySymbols = Calendar.current.shortWeekdaySymbols
+        
+        private var weekDates: [Date] {
+            // Start from Sunday of current week
+            let startOfWeek = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: today))!
+            return (0..<7).compactMap { calendar.date(byAdding: .day, value: $0, to: startOfWeek) }
+        }
+        
+        var body: some View {
+            VStack(alignment: .leading){
+                NavigationLink(destination: CalendarPawup()) {
+                    HStack (spacing: -15){
+                        Text("Your Calendar")
+                            .font(.custom("GNF", size: 24))
+                            .fontWeight(.bold)
+                            .foregroundColor(.black)
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 15)
+                        
+                        Image("paly")
+                            .resizable()
+                            .frame(width: 28, height: 28)
+                        
+                    }
+                }
+                HStack(spacing: 12) {
+                    ForEach(Array(weekDates.enumerated()), id: \.element) { index, date in
+                        VStack(spacing: 6) {
+                            // Weekday letter above each cell
+                            Text(weekdayLetter(for: date))
+                                .font(.gnf(16))
+                                .foregroundColor(.black)
+                            
+                            // Day content
+                            let day = calendar.component(.day, from: date)
+                            
+                            if let did = WorkoutStore.get(on: date) {
+                                DayCell(content: .image(did ? "Star" : "brokenheart"))
+                            } else if isPast(date) {
+                                DayCell(content: .image("brokenheart"))
+                            } else {
+                                DayCell(content: .number(day))
+                            }
+                        }
+                    }
+                } .padding(.horizontal, 12)
+            }
+            
+        }
+        
+        private func isPast(_ date: Date) -> Bool {
+            let today = calendar.startOfDay(for: Date())
+            let target = calendar.startOfDay(for: date)
+            return target < today
+        }
+        
+        private func weekdayLetter(for date: Date) -> String {
+            let index = calendar.component(.weekday, from: date) - 1
+            // Make sure it's in bounds
+            return (0..<7).contains(index) ? String(weekdaySymbols[index].prefix(1)) : ""
+        }
     }
 
-    private func isPast(_ date: Date) -> Bool {
-        let today = calendar.startOfDay(for: Date())
-        let target = calendar.startOfDay(for: date)
-        return target < today
-    }
-
-    private func weekdayLetter(for date: Date) -> String {
-        let index = calendar.component(.weekday, from: date) - 1
-        // Make sure it's in bounds
-        return (0..<7).contains(index) ? String(weekdaySymbols[index].prefix(1)) : ""
-    }
-}
 
 #Preview {
     PetPage()
