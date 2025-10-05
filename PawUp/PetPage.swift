@@ -40,7 +40,7 @@ struct PetPage: View {
                     
                     // Main card and action btn
                     ZStack(alignment: .bottom) {
-                        BuddyCardView()
+                        BuddyCardView(streakManager: streakManager)
                         ActionButtonView(streakManager: streakManager)
                             .offset(y: 40)
                     }
@@ -76,15 +76,15 @@ struct coinsView: View {
 struct BuddyCardView: View {
     @AppStorage("selectedBuddy") private var selectedBuddyID: String = ""
     @AppStorage("selectedAccessory") private var selectedAccessory: String = ""
+    
+    @ObservedObject var streakManager: StreakManager
 
     var body: some View {
         ZStack(alignment: .leading) {
-            // Background image as a card
             Image("petCard")
                 .resizable()
                 .clipped()
 
-            // Content over the image
             HStack(alignment: .center) {
                 Text("Your buddy’s tail is wagging—ready to move?")
                     .font(.custom("GNF", size: 24))
@@ -96,13 +96,11 @@ struct BuddyCardView: View {
                 Spacer(minLength: 20)
 
                 ZStack {
-                    // Pet base
-                    Image("\(selectedBuddyID)_image")
+                    Image(petImageName)
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                         .frame(width: 150, height: 150)
 
-                    // Accessory overlay (if chosen)
                     if !selectedAccessory.isEmpty {
                         Image(selectedAccessory)
                             .resizable()
@@ -114,7 +112,19 @@ struct BuddyCardView: View {
             }
             .padding(20)
         }
-        .fixedSize(horizontal: false, vertical: true) // shrink-wrap
+        .fixedSize(horizontal: false, vertical: true)
+    }
+
+    // Compute image name based on pet and mood
+    private var petImageName: String {
+        switch streakManager.petMood {
+        case .happy:
+            return "\(selectedBuddyID)_happy"
+        case .crying:
+            return "\(selectedBuddyID)_crying"
+        case .normal:
+            return "\(selectedBuddyID)_image"
+        }
     }
 
     private let accessoryOffsets: [String: [String: CGSize]] = [
@@ -128,8 +138,9 @@ struct BuddyCardView: View {
             "redTie": CGSize(width: -16, height: 3),
             "pinkTie": CGSize(width: -15, height: -40)
         ]
-]
+    ]
 }
+
 
 //  Main View that holds all the Action Buttons
 struct ActionButtonView: View {
