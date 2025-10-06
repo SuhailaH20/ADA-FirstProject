@@ -584,114 +584,134 @@ struct BottomSheetView: View {
     }
 }
         
-    struct TrophyTile: View {
-        var imageName: String
-        var price: Int
-        var isSelected: Bool = false
-        var onTap: () -> Void = {}
-            
-            var body: some View {
-                Button(action: { onTap() }) {
-                    VStack(spacing: 8) {
-                        Image(imageName)
-                            .resizable()
-                            .interpolation(.none)
-                            .scaledToFit()
-                            .frame(height: 60)
-                        
-                        ZStack {
-                            Image("coins")
-                                .resizable()
-                                .frame(width: 60, height: 24)
-                            Text("\(price)")
-                                .font(.custom("GNF", size: 16))
-                                .foregroundColor(.black)
-                                .offset(x: 4)
-                        }
-                    }
-                    .padding(8)
-                    .frame(maxWidth: .infinity)
-                    .background(Color(red: 237/255, green: 225/255, blue: 198/255))
-                    .cornerRadius(8)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 3)
-                    )
+struct TrophyTile: View {
+    var imageName: String
+    var price: Int
+    var isSelected: Bool = false
+    var onTap: () -> Void = {}
+        
+    var body: some View {
+        Button(action: { onTap() }) {
+            VStack(spacing: 8) {
+                Image(imageName)
+                    .resizable()
+                    .interpolation(.none)
+                    .scaledToFit()
+                    .frame(height: 60)
+                
+                ZStack {
+                    Image("coins")
+                        .resizable()
+                        .frame(width: 60, height: 24)
+                    Text("\(price)")
+                        .font(.custom("GNF", size: 16))
+                        .foregroundColor(.black)
+                        .offset(x: 4)
                 }
-                .buttonStyle(PlainButtonStyle())
             }
+            .padding(8)
+            .frame(maxWidth: .infinity)
+            .background(Color(red: 237/255, green: 225/255, blue: 198/255))
+            .cornerRadius(8)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 3)
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
 }
 
-    struct CalendarWeekView: View {
-        private let calendar = Calendar.current
-        private let today = Date()
-        
-        // Weekday letters for display: ["S", "M", ..., "S"]
-        private let weekdaySymbols = Calendar.current.shortWeekdaySymbols
-        
-        private var weekDates: [Date] {
-            // Start from Sunday of current week
-            let startOfWeek = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: today))!
-            return (0..<7).compactMap { calendar.date(byAdding: .day, value: $0, to: startOfWeek) }
-        }
-        
-        var body: some View {
-            VStack(alignment: .leading){
-                NavigationLink(destination: CalendarPawup()) {
-                    HStack (spacing: -15){
-                        Text("Your Calendar")
-                            .font(.custom("GNF", size: 24))
-                            .fontWeight(.bold)
-                            .foregroundColor(.black)
-                            .padding(.horizontal, 20)
-                            .padding(.vertical, 15)
-                        
-                        Image("paly")
-                            .resizable()
-                            .frame(width: 28, height: 28)
-                        
-                    }
+struct CalendarWeekView: View {
+    private let calendar = Calendar.current
+    private let today = Date()
+    @AppStorage("calendarStartDate") private var calendarStartDate: String = "" // من صفحة Setup
+    @AppStorage("lastBreakDayUsed") private var lastBreakDayUsed: String = ""   // تاريخ يوم البريك
+    @AppStorage("lastCheckInDate") private var lastCheckInDate: String = ""     // للتحديث الفوري بعد التشيك ✅
+
+    // Weekday letters for display: ["S", "M", ..., "S"]
+    private let weekdaySymbols = Calendar.current.shortWeekdaySymbols
+    
+    private var weekDates: [Date] {
+        // Start from Sunday of current week
+        let startOfWeek = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: today))!
+        return (0..<7).compactMap { calendar.date(byAdding: .day, value: $0, to: startOfWeek) }
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading){
+            NavigationLink(destination: CalendarPawup()) {
+                HStack (spacing: -15){
+                    Text("Your Calendar")
+                        .font(.custom("GNF", size: 24))
+                        .fontWeight(.bold)
+                        .foregroundColor(.black)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 15)
+                    
+                    Image("paly")
+                        .resizable()
+                        .frame(width: 28, height: 28)
+                    
                 }
-                HStack(spacing: 12) {
-                    ForEach(Array(weekDates.enumerated()), id: \.element) { index, date in
-                        VStack(spacing: 6) {
-                            // Weekday letter above each cell
-                            Text(weekdayLetter(for: date))
-                                .font(.gnf(16))
-                                .foregroundColor(.black)
-                            
-                            // Day content
-                            let day = calendar.component(.day, from: date)
-                            
-                            if let did = WorkoutStore.get(on: date) {
-                                DayCell(content: .image(did ? "Star" : "brokenheart"))
-                            } else if isPast(date) {
-                                DayCell(content: .image("brokenheart"))
-                            } else {
-                                DayCell(content: .number(day))
-                            }
+            }
+            HStack(spacing: 12) {
+                ForEach(Array(weekDates.enumerated()), id: \.element) { _, date in
+                    VStack(spacing: 6) {
+                        // Weekday letter above each cell
+                        Text(weekdayLetter(for: date))
+                            .font(.gnf(16))
+                            .foregroundColor(.black)
+                        
+                        // Day content
+                        let day = calendar.component(.day, from: date)
+                        let dateStr = isoKey(date) // يستخدم "ظهر" اليوم قبل التحويل لـ UTC
+                        
+                        if calendarStartDate.isEmpty {
+                            DayCell(content: .number(day))
+                        } else if dateStr < calendarStartDate {
+                            DayCell(content: .number(day))
+                        } else if !lastBreakDayUsed.isEmpty && lastBreakDayUsed == dateStr {
+                            DayCell(content: .number(day))
+                        } else if let did = WorkoutStore.get(on: date) {
+                            DayCell(content: .image(did ? "Star" : "brokenheart"))
+                        } else if isPast(date) {
+                            DayCell(content: .image("brokenheart"))
+                        } else {
+                            DayCell(content: .number(day))
                         }
                     }
-                } .padding(.horizontal, 12)
-            }
-            
+                }
+            } .padding(.horizontal, 12)
         }
         
-        private func isPast(_ date: Date) -> Bool {
-            let today = calendar.startOfDay(for: Date())
-            let target = calendar.startOfDay(for: date)
-            return target < today
-        }
-        
-        private func weekdayLetter(for date: Date) -> String {
-            let index = calendar.component(.weekday, from: date) - 1
-            // Make sure it's in bounds
-            return (0..<7).contains(index) ? String(weekdaySymbols[index].prefix(1)) : ""
-        }
     }
+    
+    private func isPast(_ date: Date) -> Bool {
+        let today = calendar.startOfDay(for: Date())
+        let target = calendar.startOfDay(for: date)
+        return target < today
+    }
+    
+    private func weekdayLetter(for date: Date) -> String {
+        let index = calendar.component(.weekday, from: date) - 1
+        // Make sure it's in bounds
+        return (0..<7).contains(index) ? String(weekdaySymbols[index].prefix(1)) : ""
+    }
+    
+    // نصنع مفتاح اليوم بالتاريخ فقط لكن نثبت الساعة على الظهر المحلي قبل التحويل لـ UTC
+    private func isoKey(_ date: Date) -> String {
+        let localNoon = calendar.date(bySettingHour: 12, minute: 0, second: 0, of: date) ?? date
+        let fmt = DateFormatter()
+        fmt.calendar = Calendar(identifier: .gregorian)
+        fmt.locale = Locale(identifier: "en_US_POSIX")
+        fmt.timeZone = TimeZone(secondsFromGMT: 0)
+        fmt.dateFormat = "yyyy-MM-dd"
+        return fmt.string(from: localNoon)
+    }
+}
 
 
 #Preview {
     PetPage()
 }
-
