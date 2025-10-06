@@ -316,9 +316,10 @@ struct CustomProgressBar: View {
 struct ExerciseView: View {
     @State private var isChecked: Bool = false
     @ObservedObject var streakManager: StreakManager
-    @State private var isButtonDisabled = false
+    //@State private var isButtonDisabled = false
     @AppStorage("coins") private var coins: Int = 0
     @AppStorage("lastCheckInDate") private var lastCheckInDate: String = ""
+    @AppStorage("wasCheckedToday") private var wasCheckedToday: Bool = false // NEW
 
     var body: some View {
         HStack {
@@ -347,44 +348,60 @@ struct ExerciseView: View {
             Spacer()
 
             Button(action: {
-                // Keep original behavior + persist workout = true for today
                 streakManager.resetIfMissed()
+                
                 isChecked.toggle()
-                isButtonDisabled = true
-                streakManager.checkInToday()
 
-               
                 if isChecked {
+                    // ✅ Checked: add streak and coin
+                    streakManager.checkInToday()
                     WorkoutStore.set(true, on: Date())
-                }
-
-                // Reset after 1 minute (UI only)
-                DispatchQueue.main.asyncAfter(deadline: .now() + 60) {
-                    isChecked = false
-                    isButtonDisabled = false
-                }
-
-                if isChecked {
+                    
                     let today = formattedToday()
                     if lastCheckInDate != today {
                         coins += 1
                         lastCheckInDate = today
+                        wasCheckedToday = true // mark that we counted it
                     }
+                } else {
+                    // ❌ Unchecked: undo streak and coin if they were added
+                    if wasCheckedToday {
+                        streakManager.streakDays = max(0, streakManager.streakDays - 1)
+                        coins = max(0, coins - 1)
+                        lastCheckInDate = ""
+                        wasCheckedToday = false
+                    }
+                    
+                    WorkoutStore.set(false, on: Date())
                 }
+
+
+                // Optional: Auto reset after 1 minute
+                DispatchQueue.main.asyncAfter(deadline: .now() + 60) {
+                    isChecked = false
+                }
+
             }) {
                 Image(systemName: isChecked ? "checkmark.square.fill" : "square")
                     .resizable()
                     .frame(width: 26, height: 26)
                     .foregroundColor(isChecked ? Color(red: 0xC7/255, green: 0xAA/255, blue: 0x82/255) : .white)
             }
-            .disabled(isButtonDisabled || isChecked)
+            //.disabled(isButtonDisabled && isChecked)
         }
         .padding()
         .background(Color.brandNavy)
         .cornerRadius(5)
         .padding(.horizontal, 20)
     }
+    
+    private func formattedToday() -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: Date())
+    }
 }
+
 
 struct InsightsSection: View {
     @ObservedObject var streakManager: StreakManager
@@ -604,6 +621,7 @@ struct BottomSheetView: View {
                 .buttonStyle(PlainButtonStyle())
             }
 }
+
     struct CalendarWeekView: View {
         private let calendar = Calendar.current
         private let today = Date()
