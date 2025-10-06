@@ -40,7 +40,7 @@ struct PetPage: View {
                     
                     // Main card and action btn
                     ZStack(alignment: .bottom) {
-                        BuddyCardView(streakManager: streakManager)
+                        BuddyCardView()
                         ActionButtonView(streakManager: streakManager)
                             .offset(y: 40)
                     }
@@ -76,15 +76,15 @@ struct coinsView: View {
 struct BuddyCardView: View {
     @AppStorage("selectedBuddy") private var selectedBuddyID: String = ""
     @AppStorage("selectedAccessory") private var selectedAccessory: String = ""
-    
-    @ObservedObject var streakManager: StreakManager
 
     var body: some View {
         ZStack(alignment: .leading) {
+            // Background image as a card
             Image("petCard")
                 .resizable()
                 .clipped()
 
+            // Content over the image
             HStack(alignment: .center) {
                 Text("Your buddy’s tail is wagging—ready to move?")
                     .font(.custom("GNF", size: 24))
@@ -96,11 +96,13 @@ struct BuddyCardView: View {
                 Spacer(minLength: 20)
 
                 ZStack {
-                    Image(petImageName)
+                    // Pet base
+                    Image("\(selectedBuddyID)_image")
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                         .frame(width: 150, height: 150)
 
+                    // Accessory overlay (if chosen)
                     if !selectedAccessory.isEmpty {
                         Image(selectedAccessory)
                             .resizable()
@@ -112,19 +114,7 @@ struct BuddyCardView: View {
             }
             .padding(20)
         }
-        .fixedSize(horizontal: false, vertical: true)
-    }
-
-    // Compute image name based on pet and mood
-    private var petImageName: String {
-        switch streakManager.petMood {
-        case .happy:
-            return "\(selectedBuddyID)_happy"
-        case .crying:
-            return "\(selectedBuddyID)_crying"
-        case .normal:
-            return "\(selectedBuddyID)_image"
-        }
+        .fixedSize(horizontal: false, vertical: true) // shrink-wrap
     }
 
     private let accessoryOffsets: [String: [String: CGSize]] = [
@@ -138,9 +128,8 @@ struct BuddyCardView: View {
             "redTie": CGSize(width: -16, height: 3),
             "pinkTie": CGSize(width: -15, height: -40)
         ]
-    ]
+]
 }
-
 
 //  Main View that holds all the Action Buttons
 struct ActionButtonView: View {
@@ -316,10 +305,9 @@ struct CustomProgressBar: View {
 struct ExerciseView: View {
     @State private var isChecked: Bool = false
     @ObservedObject var streakManager: StreakManager
-    //@State private var isButtonDisabled = false
+    @State private var isButtonDisabled = false
     @AppStorage("coins") private var coins: Int = 0
     @AppStorage("lastCheckInDate") private var lastCheckInDate: String = ""
-    @AppStorage("wasCheckedToday") private var wasCheckedToday: Bool = false // NEW
 
     var body: some View {
         HStack {
@@ -348,60 +336,44 @@ struct ExerciseView: View {
             Spacer()
 
             Button(action: {
+                // Keep original behavior + persist workout = true for today
                 streakManager.resetIfMissed()
-                
                 isChecked.toggle()
+                isButtonDisabled = true
+                streakManager.checkInToday()
+
+               
+                if isChecked {
+                    WorkoutStore.set(true, on: Date())
+                }
+
+                // Reset after 1 minute (UI only)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 60) {
+                    isChecked = false
+                    isButtonDisabled = false
+                }
 
                 if isChecked {
-                    // ✅ Checked: add streak and coin
-                    streakManager.checkInToday()
-                    WorkoutStore.set(true, on: Date())
-                    
                     let today = formattedToday()
                     if lastCheckInDate != today {
                         coins += 1
                         lastCheckInDate = today
-                        wasCheckedToday = true // mark that we counted it
                     }
-                } else {
-                    // ❌ Unchecked: undo streak and coin if they were added
-                    if wasCheckedToday {
-                        streakManager.streakDays = max(0, streakManager.streakDays - 1)
-                        coins = max(0, coins - 1)
-                        lastCheckInDate = ""
-                        wasCheckedToday = false
-                    }
-                    
-                    WorkoutStore.set(false, on: Date())
                 }
-
-
-                // Optional: Auto reset after 1 minute
-                DispatchQueue.main.asyncAfter(deadline: .now() + 60) {
-                    isChecked = false
-                }
-
             }) {
                 Image(systemName: isChecked ? "checkmark.square.fill" : "square")
                     .resizable()
                     .frame(width: 26, height: 26)
                     .foregroundColor(isChecked ? Color(red: 0xC7/255, green: 0xAA/255, blue: 0x82/255) : .white)
             }
-            //.disabled(isButtonDisabled && isChecked)
+            .disabled(isButtonDisabled || isChecked)
         }
         .padding()
         .background(Color.brandNavy)
         .cornerRadius(5)
         .padding(.horizontal, 20)
     }
-    
-    private func formattedToday() -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        return formatter.string(from: Date())
-    }
 }
-
 
 struct InsightsSection: View {
     @ObservedObject var streakManager: StreakManager
@@ -486,34 +458,21 @@ struct Item {
 }
 
 struct BottomSheetView: View {
+    //  items name and a price
     let items: [Item] = [
-        Item(name: "necklace", price: 10),
-        Item(name: "redTie", price: 15),
-        Item(name: "pinkTie", price: 20)
+            Item (name: "necklace", price: 10),
+            Item (name: "redTie", price: 15),
+            Item (name: "pinkTie", price: 20)
     ]
     let columns = [
         GridItem(.flexible()),
         GridItem(.flexible())
     ]
     
-    // Selected equipped accessory
+    
+    // Shared storage for selected accessory
     @AppStorage("selectedAccessory") private var selectedAccessory: String = ""
-    // User coins
     @AppStorage("coins") private var coins: Int = 0
-    
-    // Store owned accessories as a comma-separated string in AppStorage (you can also use JSON)
-    @AppStorage("ownedAccessories") private var ownedAccessoriesString: String = "necklace" // necklace is free, so start with it
-    
-    // Computed property to get owned accessories as a Set for easier lookup
-    private var ownedAccessories: Set<String> {
-        get {
-            Set(ownedAccessoriesString.split(separator: ",").map { String($0) })
-        }
-        set {
-            ownedAccessoriesString = newValue.joined(separator: ",")
-        }
-    }
-    
     @State private var showAlert = false
     @State private var alertMessage = ""
     
@@ -533,43 +492,42 @@ struct BottomSheetView: View {
                         .scaledToFit()
                         .frame(width: 60, height: 60)
                 }
-                Text("Every workout earns you coins—spend them on special accessories to celebrate your progress!") .font(.custom("GNF", size: 20)) .foregroundColor(Color(red: 208/255, green: 127/255, blue: 116/255)) .multilineTextAlignment(.center) .padding(.horizontal)
                 
-                LazyVGrid(columns: columns, spacing: 16) {
-                    ForEach(items, id: \.name) { item in
-                        TrophyTile(
-                            imageName: item.name,
-                            price: item.price,
-                            isSelected: selectedAccessory == item.name
-                        ) {
-                            if ownedAccessories.contains(item.name) {
-                                // If already owned, just toggle equip/unequip without paying
+                Text("Every workout earns you coins—spend them on special accessories to celebrate your progress!")
+                    .font(.custom("GNF", size: 20))
+                    .foregroundColor(Color(red: 208/255, green: 127/255, blue: 116/255))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+                
+                // Trophy grid
+                VStack {
+                    LazyVGrid(columns: columns, spacing: 16) {
+                        ForEach(items, id: \.name) { item in
+                            TrophyTile(
+                                imageName: item.name,
+                                price: item.price,
+                                isSelected: selectedAccessory == item.name
+                            ) {
+                                // Toggle accessory: if already selected, remove it
                                 if selectedAccessory == item.name {
-                                    selectedAccessory = "" // Unequip
-                                } else {
-                                    selectedAccessory = item.name // Equip
-                                }
-                            } else {
-                                // Not owned, try to buy if enough coins
-                                if coins >= item.price {
+                                    selectedAccessory = ""
+                                } else if coins >= item.price {
+                                    // Enough coins → buy and equip
                                     coins -= item.price
                                     selectedAccessory = item.name
-                                    var newOwned = ownedAccessories
-                                    newOwned.insert(item.name)
-                                    ownedAccessoriesString = newOwned.joined(separator: ",")
-
-                                    
                                     alertMessage = "You bought the \(item.name)!"
                                     showAlert = true
-                                } else {
+                                }
+                                else {
+                                    // Not enough coins
                                     alertMessage = "Workout more to earn enough coins!"
                                     showAlert = true
                                 }
                             }
                         }
                     }
+                    .padding()
                 }
-                .padding()
                 .background(Color.white)
                 .cornerRadius(16)
                 .padding(.horizontal)
@@ -579,10 +537,12 @@ struct BottomSheetView: View {
             .padding()
         }
         .alert(alertMessage, isPresented: $showAlert) {
-            Button("OK", role: .cancel) {}
+            Button ("OK"
+                    , role: .cancel) {
+            }
         }
     }
-}
+        
         
     struct TrophyTile: View {
         var imageName: String
@@ -620,14 +580,18 @@ struct BottomSheetView: View {
                 }
                 .buttonStyle(PlainButtonStyle())
             }
-}
-
+        }
+    }
+    
     struct CalendarWeekView: View {
         private let calendar = Calendar.current
         private let today = Date()
         
         // Weekday letters for display: ["S", "M", ..., "S"]
         private let weekdaySymbols = Calendar.current.shortWeekdaySymbols
+        
+        // Start date saved when user taps Continue in SetUp ("yyyy-MM-dd" UTC)
+        @AppStorage("calendarStartDate") private var calendarStartDate: String = ""
         
         private var weekDates: [Date] {
             // Start from Sunday of current week
@@ -663,12 +627,17 @@ struct BottomSheetView: View {
                             // Day content
                             let day = calendar.component(.day, from: date)
                             
-                            if let did = WorkoutStore.get(on: date) {
-                                DayCell(content: .image(did ? "Star" : "brokenheart"))
-                            } else if isPast(date) {
-                                DayCell(content: .image("brokenheart"))
-                            } else {
+                            // Show icons ONLY on/after the stored start date; older days stay plain numbers
+                            if isBeforeStartFromSetup(date) {
                                 DayCell(content: .number(day))
+                            } else {
+                                if let did = WorkoutStore.get(on: date) {
+                                    DayCell(content: .image(did ? "Star" : "brokenheart"))
+                                } else if isPast(date) {
+                                    DayCell(content: .image("brokenheart"))
+                                } else {
+                                    DayCell(content: .number(day))
+                                }
                             }
                         }
                     }
@@ -687,6 +656,24 @@ struct BottomSheetView: View {
             let index = calendar.component(.weekday, from: date) - 1
             // Make sure it's in bounds
             return (0..<7).contains(index) ? String(weekdaySymbols[index].prefix(1)) : ""
+        }
+        
+        // --- Helpers to compare by the saved setup start date (stable UTC key) ---
+        /// Format a date to "yyyy-MM-dd" in UTC so string compare is safe.
+        private func dayKeyUTC(_ date: Date) -> String {
+            let fmt = DateFormatter()
+            fmt.calendar = Calendar(identifier: .gregorian)
+            fmt.locale = Locale(identifier: "en_US_POSIX")
+            fmt.timeZone = TimeZone(secondsFromGMT: 0)
+            fmt.dateFormat = "yyyy-MM-dd"
+            return fmt.string(from: date)
+        }
+        
+        /// Returns true if `date` is strictly before the stored start date.
+        /// If no start date stored yet, treat as "before" to suppress icons.
+        private func isBeforeStartFromSetup(_ date: Date) -> Bool {
+            guard !calendarStartDate.isEmpty else { return true }
+            return dayKeyUTC(date) < calendarStartDate
         }
     }
 
