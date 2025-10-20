@@ -69,7 +69,7 @@ Thank you to all who have contributed to making PawUp a delightful and motivatin
 | Suhaila Hawsawi    | [LinkedIn](https://sa.linkedin.com/in/suhaila-hawsawi) | 
 | Dana Alotaibi |              |
 | Areeg Altaiyah   |   | 
-| Eatzaz Hafiz |          |
+| Eatzaz Hafiz | [LinkedIn](www.linkedin.com/in/eatzaz-hafiz) |
 | Wareef Alzahrani   |   | 
 
 
